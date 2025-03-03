@@ -98,7 +98,7 @@ class Segment { constructor(point, length, angle) {...}  update() { /* 根据父
 \end{equation}
 
 四元数转欧拉角时，设 $\mathbf {q} ={\begin{bmatrix}q_{0}&q_{1}&q_{2}&q_{3}\end{bmatrix}}^{T}={\begin{bmatrix}q_{w}&q_{x}&q_{y}&q_{z}\end{bmatrix}}^{T}$，
-而求解欧拉角时计算机中的 $arctan$ 与 $arcsin$ 只能获得区间 $(-\frac{\pi}{2},\frac{\pi}{2})$ 的结果，因此使用 $asin$ 替换 $arcsin$，$atan2$ 替换 $arctan$ 函数\cite{babylonZXY}，
+而求解欧拉角时计算机中的 $arctan$ 与 $arcsin$ 只能获得区间 $(-\frac{\pi}{2},\frac{\pi}{2})$ 的结果，因此使用 $asin$ 替换 $arcsin$，$atan2$ 替换 $arctan$ 函数，
 则：
 
 \begin{equation}

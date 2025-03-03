@@ -1,429 +1,232 @@
 % !TeX root = ../main.tex
 
-\chapter{相关技术概述}
+\chapter{相关技术基础}
+本文工作开展在基于深度学习的神经辐射场之上，通过结合可微渲染实现了数字资产解耦管线，
+致力于无缝对接传统渲染管线并解决其中的耦合问题。本章将介绍本文研究所必要的深度学习基础、
+可微渲染理论基础、传统渲染管线介绍以及神经辐射场理论基础。
 
-...
-
-本章主要对其中涉及的基本概念与相关技术进行介绍。
-
-\section{西瓜种植}
-
-...
-虽然西瓜很好吃，但我不喜欢有很多种子的。
-
-\subsection{西瓜种子的最大公约数}
-
-所以只能边吃西瓜边数种子。
-展示一下可以写伪代码，说实话感觉格式优点麻烦。
-譬如辗转相除法伪代码示例如下：
-
-\begin{algorithm}
-  \caption{辗转相除法}
-  \label{alg1}
-  \small
-  \begin{algorithmic}
-    \WHILE{$b \neq 0$}
-      \IF{$a \ge b$}
-        \STATE $a \leftarrow a - b$
-      \ELSE
-        \STATE $b \leftarrow b - a$
-      \ENDIF
-    \ENDWHILE
-  \end{algorithmic}
-\end{algorithm}
-
-
-
-
-\section{鸡鸭养殖}
-
-鸡鸭适合养在树林里，这样既可以节约空间，鸡也可以找虫子吃，粪便还可作为肥料，旁边要是再有个小池塘就更好了。
-
-\subsection{循环生态的应用}
-
-
-% TIKZ 画自动机
-
-FSM 逻辑如图~\ref{fig:fsm-logic-example} 所示，它的输入和当前状态决定着下一个状态和输出。
+\section{深度学习基础}
+【这里应该加点引言之类的】
+\subsection{基于坐标的多层感知机}
+多层感知机（Multilayer Perceptron, MLP）作为深度学习的基础模型，由感知机推广而来，
+本质是一种前馈神经网络。MLP由多个神经元层组成，每个神经元的结构如图~\ref{fig:neuron}所示，其接收多个输入值，
+并按照自身权重进行加权求和，接着，使用激活函数对其进行非线性变换，并将变换后的值传递给下一层神经元。
 
 \begin{figure}[htb]
   \centering
-  \begin{tikzpicture}[node distance=12pt]
-    \node[draw, rounded corners]                        (start)   {输入};
-    \node[draw, below right=10pt of start]                         (transition)  {状态转移条件};
-    \node[draw, aspect=2, below=60pt of start]     (output conditions)  {输出条件};
-    \node[draw, below=of transition]                        (state)  {状态};
-    \node[draw, rounded corners, below=of output conditions]  (end)     {输出};
-    \coordinate[right=40pt of state] (point1);
-    
-    \draw[->] (start)  |- (transition);
-    \draw[->] (transition) -- (state);
-    \draw[->] (state) |-  (output conditions);
-    \draw[->] (output conditions) -- (end);
-    \draw[->] (start)  -- (output conditions);
-    \draw[->] (state)  -- (point1)  |-  (transition);
-  \end{tikzpicture}
-  \caption{FSM 逻辑示意图} \label{fig:fsm-logic-example}
+\begin{tikzpicture}[->,>=stealth, node distance=1.5cm, auto]
+  % 定义输入节点
+  \node[circle, draw, minimum size=1cm] (x1) at (0, 2) {$x_1$};
+  \node[circle, draw, minimum size=1cm] (x2) at (0, 0) {$x_2$};
+  \node[circle, draw, minimum size=1cm] (x3) at (0, -2) {$x_3$};
+
+  % 定义偏置节点
+  \node (bias) at (3, -2) {$\mathrm{b}$};
+
+  % 定义神经元节点，内部写上激活函数（如 f(·)）
+  \node[circle, draw, minimum size=1cm] (sum) at (3, 0) {$\sum$};
+
+  % 从输入节点到神经元的连线，并标注权重
+  \draw (x1) -- node[midway, above] {$w_1$} (sum);
+  \draw (x2) -- node[midway, above] {$w_2$} (sum);
+  \draw (x3) -- node[midway, above] {$w_3$} (sum);
+  % 从偏置节点到神经元的连线，标注偏置项
+  \draw (bias) -- node[midway, below] {}(sum);
+
+  % 定义神经元节点，内部写上激活函数（如 f(·)）
+  \node[circle, draw, minimum size=1cm] (activate) at (5.5, 0) {$f(\cdot)$};
+
+  \node (y) at (7.5, 0) {$y$};
+
+  \draw (sum) -- node[midway, below] {}(activate);
+  \draw (activate) -- node[midway, below] {}(y);
+\end{tikzpicture}
+\caption{神经元的结构示意图}
+\label{fig:neuron}
 \end{figure}
 
-
-
-
-\subsection{确定有限状态机}
-
-通常使用没有起点的箭头表示开始状态，双圆圈表示接受状态。
-自动机中开始状态也可以是接受状态，此时表示其接受空字符串。
-
-如图 \ref{fig:fsm-binary-even-zero-example} 所示，这是一台用于判断输入二进制字符串是否含有偶数个 0 的有限自动机的逻辑图。
-$S_1$ 为开始状态，并代表已经输入了偶数个 0，因此 $S_1$ 也是接受状态。
-若输入为不包含 0 或含有偶数个 0 的字符串（例如：1，100，01011等），则自动机以接受状态结束。
+多层感知机通过神经元从输入数据中学习到合适的参数权重和偏置项，利用激活函数将线性关系转化为非线性信号，
+使得网络能够准确地完成各种分类或回归预测等方面的任务。这些信号从输入层通过一系列的隐藏层最终输出到输出层，
+各层之间是完全连接的，具体如图~\ref{fig:mlp}所示：
 
 \begin{figure}[htb]
   \centering
-    \begin{tikzpicture}[shorten >=1pt,auto,transform shape]
-    \node[initial,state, accepting] (s1) {$S_1$};
-    \node[state] (s2) [right of=s1]  {$S_2$};
-    \path[->] (s1) edge [bend left] node [align=center]  {0} (s2)
-          (s1) edge [loop above]      node [align=center]  {1} (s1)
-          (s2) edge [bend left]       node [align=center]  {0} (s1)
-          (s2) edge [loop right]       node [align=center]  {1} (s2);
-    \end{tikzpicture}
-  \caption{FSM：检测二进制数是否含有偶数个零}
-  \label{fig:fsm-binary-even-zero-example}
-\end{figure}
+  \begin{tikzpicture}[>=stealth, auto]
 
-同时它也是一个确定有限状态机（DFA），对字母表中每个符号，确定有限自动机的状态都有且仅有一个转移。
-它对应的状态转移表如表~\ref{tab:fsm-state-example} 所示：
-
-\begin{table}
-  \centering
-  \caption{状态转移表}
-  \begin{tabular}{c|ccc}
-    \toprule
-    输入状态 & 1 & 0   \\
-    \midrule
-    $S_1$   & $S_1$ & $S_2$  \\
-    $S_2$   & $S_2$ & $S_1$  \\
-    \bottomrule
-  \end{tabular}
-  \label{tab:fsm-state-example}
-\end{table}
-
-
-\section{虚拟世界}
-
-...
-
-\subsection{坐标系}
-
-还可以用 TIKZ 画坐标系。
-
-目前工业界的各类软件采用坐标系也各不相同，
-譬如 Unreal、Unity、Babylon、DirectX 均采用左手坐标系（如图~\ref{fig:left-hand-coordinate-system}），
-而 Three.js、Cocos、OpenGL、Vulkan 等则采用右手坐标系（如图~\ref{fig:right-hand-coordinate-system}）。
-
-\begin{figure}[htb]
-  \centering
-  \begin{minipage}[t]{.4\textwidth}
-    \centering
-    \begin{tikzpicture}[x=0.5cm, y=0.5cm, z=0.3cm]
-      % Axes
-      \draw [->] (0,0,0) -- (4,0,0) node [at end, right] {$X$};
-      \draw [->] (0,0,0) -- (0,4,0) node [at end, left] {$Y$};
-      \draw [->] (0,0,0) -- (0,0,4) node [at end, left] {$Z$};
-    \end{tikzpicture}
-    \caption{左手坐标系}
-    \label{fig:left-hand-coordinate-system}
-  \end{minipage}
-  \begin{minipage}[t]{.4\textwidth}
-    \centering
-    \begin{tikzpicture}[x=0.5cm, y=0.5cm, z=-0.3cm]
-      % Axes
-      \draw [->] (0,0,0) -- (4,0,0) node [at end, right] {$X$};
-      \draw [->] (0,0,0) -- (0,4,0) node [at end, left] {$Y$};
-      \draw [->] (0,0,0) -- (0,0,4) node [at end, left] {$Z$};
-    \end{tikzpicture}
-    \caption{右手坐标系}
-    \label{fig:right-hand-coordinate-system}
-  \end{minipage}
-\end{figure}
-
-
-\section{数学公式}
-
-\subsection{四元数的定义}
-
-譬如四元数：
-
-\begin{equation}
-  i^2 = j^2 = k^2 = -1 \\
-\end{equation}
-\begin{equation}
-\begin{aligned}
-  ij = -ji = k \\
-  ki = -ik = j \\
-  jk = -kj = i
-\end{aligned}
-\end{equation}
-
-
-\subsection{四元数的几何意义}
-
-TIKZ 画坐标系。
-
-在平面坐标系上，以横坐标 R 代表实部，纵坐标 I 代表虚部，复数的几何意义如图~\ref{fig:complex-number}。
-
-\begin{figure}[htb]
-  \centering
-    \begin{tikzpicture}
-      \coordinate (origin) at (0,0);
-      \coordinate (ab) at (2,1);
-      \coordinate (ba) at (-1,2);
-
-      \draw[-stealth] (-2.5,0) -- (2.5,0) node[right](r) {$R$}; 
-      \draw[-stealth] (0,-1) -- (0,2.5) node[right](i) {$I$}; 
-
-      \draw [->, thick] (origin) -- (ab) node[at end, right]{$a+bi$};
-      \draw [->, thick] (origin) -- (ba) node[at end, left]{$-b+ai$};
-      
-      \draw [loosely dashed] (0,1) node[left]{$bi$} -- (ab);
-      \draw [loosely dashed] (2,0) node[below]{$a$} -- (ab);
-
-      \draw [loosely dashed] (-1,0) node[below]{$-b$} -- (ba);
-      \draw [loosely dashed] (0,2) node[right]{$ai$} -- (ba);
-
-      \pic [draw, -, "$\theta$",angle radius=4pt , angle eccentricity=2] {right angle = ab--origin--ba};
-      \pic [draw=red, ->, angle radius=2.23cm, angle eccentricity=2] {angle = ab--origin--ba};
-    \end{tikzpicture}
-  \caption{复数的几何意义}
-  \label{fig:complex-number}
-\end{figure}
-$(a+bi)*i=-b+ai$，复数乘以 $i$，相当于将平面上复数做逆时针旋转 $\theta$（$90^{\circ}$）。
-
-同理非零四元数通常可用于描述三维空间的拉伸与旋转变换，单位 $i$、$j$、$k$ 的几何意义则可以理解为三维空间的一种旋转。
-以右手坐标系（如图~\ref{fig:right-hand-coordinate-system}）为例，
-其中 $i$ 代表绕 $Z$ 轴（$X$正向向$Y$轴正向）旋转，$j$ 代表绕 $Y$ 轴（$Z$正向向$X$轴正向）旋转，$k$ 代表绕 $X$ 轴（$Y$正向向$Z$轴正向）旋转。
-
-四元数模长定义如公式\eqref{eq:quaternion-norm}，当 $q=a+bi+cj+dk$，$||q||=1$ 时，它所代表的变换并不会对原向量进行缩放，而是一个纯旋转。
-\begin{equation}
-  ||q|| = a^2 + b^2 + c^2 + d^2
-  \label{eq:quaternion-norm}
-\end{equation}
-
-此时 $q$ 被称为单位四元数，也因此它通常被用于表示三维空间的旋转。
-同时四元数在静态坐标系中的代数计算，使其避免了动态欧拉角所造成的万向锁问题。
-
-\subsection{四元数的其他优势}
-
-四元数相比旋转矩阵与欧拉角，除了可以避免万向锁问题，还具有其他方面的优势。
-譬如速度更快、占用存储空间小、更易于平滑插值等。
-
-3D 空间中任意一个旋转都能够使用三个四元数相乘的形式进行表达，即 $ R_{q}(p) = qpq^{-1} $，其中 $q$ 为一个单位四元数，$p$ 为一个纯四元数。
-$ R_{q} $ 表示一个可以将空间点 $p$ 旋转到空间另一个点 $ R_{q}(p) $ 的一个旋转。
-
-定义一个四元数 $ q=a+bi+cj+dk $ 的共轭为 $ q^* = a - bi -cj -dk $。
-
-设 $ \mathbf{v} = bi+cj+dk $，则 $ q=[s,\mathbf{v}] $，$ q^*=[s,-\mathbf{v}] $，此时：
-\begin{equation}
-qq* = s^2 + v^2 = ||q||^2
-\end{equation}
-
-由于 $q^{-1}=\frac{q^*}{||q||^2} $，若使用单位四元数，则模长（$ ||q||^2 $）为 1，故此时：
-\begin{equation}
-q^{-1} = \frac{q^*}{1} = q^*
-\end{equation}
-
-存在 3D 旋转公式，任意向量 $\mathbf{v}$ 沿着以单位向量定义的旋转轴 $\mathbf{u}$ 旋转 $\theta$ 度之后的 $\mathbf{v}^{'}$ 可以使用四元数乘法获得。
-令 $v=[0,\mathbf{v}]$，$q=[\cos{\frac{1}{2}\theta},\sin{\frac{1}{2}\theta}\mathbf{u}]$，则：
-\begin{equation}
-v^{'} = qvq^{-1} = qvq^*
-\end{equation}
-
-同时存在与单位四元数旋转效果相同的 3D 旋转矩阵，即任意向量 $\mathbf{v}$ 沿着以单位向量定义的旋转轴 $\mathbf{u}$ 旋转 $\theta$ 角度之后的 $\mathbf{v}^{'}$ 可以使用矩阵乘法来获得。
-
-令 $a=\cos{\frac{1}{2}\theta}$，$b=\sin{\frac{1}{2}\theta}u_x$，$c=\sin{\frac{1}{2}\theta}u_y$，$d=\sin{\frac{1}{2}\theta}u_z$，那么：
-\begin{equation}
-  \mathbf{v}^{'} = 
-  \begin{bmatrix}
-    1-2c^2-2d^2 & 2bc-2ad & 2ac+2bd \\
-    2bc+2ad & 1-2b^2-2d^2 & 2cd-2ab \\
-    2bd-2ac & 2ab+2cd & 1-2b^2-2c^2 \\
-  \end{bmatrix}
-  \mathbf{v}
-\end{equation}
-
-由上可知，四元数相对于旋转矩阵，使用 $q^*$ 替换 $q^{-1}$，大大提高了求四元数的逆的计算效率，同时比旋转矩阵的计算更为快速方便。
-此外，四元数对应实部与虚部 $ijk$ 只需要存储四个数值，空间占用也远小于同等效果的旋转矩阵。
-
-\subsubsection{绘制箭头示例}
-
-线性插值（Lerp）会沿一条直线进行插值，如图 \ref{fig:lerp} 所示，$v_t$ 在 $v_0$ 与 $v_1$ 组成的三角形斜边上滑动。
-
-\begin{figure}[htb]
-  \centering
-  \begin{tikzpicture}[scale=0.9]
-    \coordinate (o) at (0,0);
-    \coordinate (v1) at (2,4);
-    \coordinate (vt) at (3,2);
-    \coordinate (v0) at (4,0);
+    % 定义公共变量
+    \def\xspacing{2}      % 输入层和隐藏层的水平间距
+    \def\layersep{2}       % 垂直层间距
     
-    \fill[black] (o) circle (0.05) node[left]{O};
-    
-    \draw[->] (o) -> (v1) node[right]{$v_1$};
-    \draw[->] (o) -> (vt) node[right]{$v_t$};
-    \draw[red, ->] (o) -> (v0) node[right]{$v_0$};
-    \draw[red, ->] (v0) -> (vt);
-    \draw[->] (vt) -> (v1);
-  \end{tikzpicture}
-  \caption{线性插值示意图}
-  \label{fig:lerp}
-\end{figure}
-
-$v_t$ 可写为 $v_0 + (v_1-v_0)t$，其中 $t$ 是插值的参数，取值范围为 $[0,1]$。
-\begin{equation}
-  v_t = Lerp(v_0, v_1,t) = v_0 + (v_1-v_0)t = (1-t)v_0+tv_1
-\end{equation}
-
-将 Lerp 应用于单位四元数上，可得：
-\begin{equation}
-  q_t = Lerp(q_0, q_1, t) = (1-t)q_0 + tq_1
-  \label{eq:quaternions-lerp}
-\end{equation}
-
-\subsection{贝塞尔曲线}
-
-贝塞尔曲线最初由 Paul de Casteljau 使用 de Casteljau 算法开发，是一种计算曲线的稳定方法。
-其根据控制点的数量可分为不同阶，常见类型有线性贝塞尔曲线、二次贝塞尔曲线（也曾被用于 TrueType 的字体平滑）、三次贝塞尔曲线等。
-
-线性贝塞尔曲线等同于线性插值，给定两个控制点 $P_0$ 与 $P_1$，则公式为：
-\begin{equation}
-  {\mathbf  {B}}(t)={\mathbf  {P}}_{0}+({\mathbf  {P}}_{1}-{\mathbf  {P}}_{0})t=(1-t){\mathbf  {P}}_{0}+t{\mathbf  {P}}_{1}{\mbox{ , }}t\in [0,1]
-\end{equation}
-
-二次贝塞尔曲线给定三个点 $P_1$、$P_2$ 与 $P_3$，公式为：
-\begin{equation}
-  {\mathbf  {B}}(t)=(1-t)^{{2}}{\mathbf  {P}}_{0}+2t(1-t){\mathbf  {P}}_{1}+t^{{2}}{\mathbf  {P}}_{2}{\mbox{ , }}t\in [0,1]
-\end{equation}
-
-三次贝塞尔曲线如图~\ref{fig:bezier-curve-3rd} 所示，给定四个点 $P_1$、$P_2$、$P_3$ 与 $P_4$，公式为：
-\begin{equation}
-  {\mathbf  {B}}(t)={\mathbf  {P}}_{0}(1-t)^{3}+3{\mathbf  {P}}_{1}t(1-t)^{2}+3{\mathbf  {P}}_{2}t^{2}(1-t)+{\mathbf  {P}}_{3}t^{3}{\mbox{ , }}t\in [0,1]
-\end{equation}
-
-\begin{figure}[htb]
-  \centering
-  \begin{tikzpicture}[scale=1.3]
-    \coordinate (p0) at (0,0);
-    \coordinate (p1) at (2,2);
-    \coordinate (p2) at (4,2);
-    \coordinate (p3) at (4,0);
-    
-    \fill[black] (p0) circle (0.05) node[left]{$P_0$};
-    \fill[black] (p1) circle (0.05) node[above]{$P_1$};
-    \fill[black] (p2) circle (0.05) node[above]{$P_2$};
-    \fill[black] (p3) circle (0.05) node[right]{$P_3$};
-    
-    \draw[dashed] (p0) -> (p1);
-    \draw[dashed] (p1) -> (p2);
-    \draw[dashed] (p2) -> (p3);
+    % 定义输出层特有的水平间距（可以调大该值）
+    \def\outputxspacing{3} % 输出层水平间距
   
-    \draw (p0) .. controls (p1) and (p2) .. (p3);
-  \end{tikzpicture}
-  \caption{三次贝塞尔曲线}
-  \label{fig:bezier-curve-3rd}
-\end{figure}
-
-$n$ 阶贝塞尔曲线给定 $P_0$、$P_1$、…、$P_n$ 等 $n+1$ 个点，公式可递归表达为：
-\begin{equation}
-  {\mathbf  {B}}(t)={\mathbf  {B}}_{{{\mathbf  {P}}_{0}{\mathbf  {P}}_{1}\ldots {\mathbf  {P}}_{n}}}(t)=(1-t){\mathbf  {B}}_{{{\mathbf  {P}}_{0}{\mathbf  {P}}_{1}\ldots {\mathbf  {P}}_{{n-1}}}}(t)+t{\mathbf  {B}}_{{{\mathbf  {P}}_{1}{\mathbf  {P}}_{2}\ldots {\mathbf  {P}}_{n}}}(t)
-\end{equation}
-
-De Casteljau 算法\cite{farin2000essentials}即基于此公式，采用递归方式来计算一组控制点所构建的贝塞尔曲线所经过的点。
-
-给定 $P_0$ 到 $P_3$ 的控制点，将其分解为 $L_0L_1L_2L_3$ 与 $R_0R_1R_2R_3$ 继续绘制，并可通过级别控制绘制的精细度，
-关键点如图~\ref{fig:de-casteljau} 所示：
-
-\begin{figure}[htb]
-  \centering
-  \begin{tikzpicture}
-    \coordinate (p0) at (0,0);
-    \coordinate (p1) at (4,4);
-    \coordinate (p2) at (8,4);
-    \coordinate (p3) at (8,0);
-    \coordinate (h) at (6,4);
-    \coordinate (l0) at (0,0);
-    \coordinate (l1) at (2,2);
-    \coordinate (l2) at (4,3);
-    \coordinate (l3) at (5.5,3);
-    \coordinate (r0) at (5.5,3);
-    \coordinate (r1) at (7,3);
-    \coordinate (r2) at (8,2);
-    \coordinate (r3) at (8,0);
+    % 输入层：3个节点
+    \foreach \i in {1,...,3} {
+      \pgfmathsetmacro{\xpos}{(\i-2)*\xspacing};
+      \node[circle, draw, minimum size=1cm] (x\i) at (\xpos, 0) {$x_{\i}$};
+    }
+  
+    % 隐藏层：4个节点
+    \foreach \i in {1,...,4} {
+      \pgfmathsetmacro{\xpos}{(\i-2.5)*\xspacing};
+      \node[circle, draw, minimum size=1cm] (v\i) at (\xpos, \layersep) {$v_{\i}$};
+    }
+  
+    % 输出层：2个节点，使用新的水平间距
+    \foreach \i in {1,...,2} {
+      \pgfmathsetmacro{\xpos}{(\i-1.5)*\outputxspacing};
+      \node[circle, draw, minimum size=1cm] (y\i) at (\xpos, 2*\layersep) {$y_{\i}$};
+    }
+  
+    % 连接输入层到隐藏层（全连接）
+    \foreach \i in {1,...,3} {
+      \foreach \j in {1,...,4} {
+        \draw[->] (x\i) -- (v\j);
+      }
+    }
     
-    \fill[black] (h) circle (0.05) node[above]{$H$};
-    
-    \fill[black] (p0) circle (0.05) node[left]{$P_0$};
-    \fill[black] (p1) circle (0.05) node[above]{$P_1$};
-    \fill[black] (p2) circle (0.05) node[above]{$P_2$};
-    \fill[black] (p3) circle (0.05) node[right]{$P_3$};
-    
-    \fill[black] (l0) circle (0.05) node[right]{$L_0$};
-    \fill[black] (l1) circle (0.05) node[above]{$L_1$};
-    \fill[black] (l2) circle (0.05) node[above]{$L_2$};
-    \fill[black] (l3) circle (0.05) node[below right]{$L_3$};
-    
-    \fill[black] (r0) circle (0.05) node[below left]{$R_0$};
-    \fill[black] (r1) circle (0.05) node[above]{$R_1$};
-    \fill[black] (r2) circle (0.05) node[right]{$R_2$};
-    \fill[black] (r3) circle (0.05) node[left]{$R_3$};
-    
-    \draw[-] (p0) -> (p1);
-    \draw[-] (p1) -> (p2);
-    \draw[-] (p2) -> (p3);
-    
-    \draw[red] (l1) -> (h);
-    \draw[red] (h) -> (r2);
-    \draw[blue] (l2) -> (r1);
+    % 连接隐藏层到输出层（全连接）
+    \foreach \i in {1,...,4} {
+      \foreach \j in {1,...,2} {
+        \draw[->] (v\i) -- (y\j);
+      }
+    }
   
   \end{tikzpicture}
-  \caption{De Casteljau 算法绘制过程}
-  \label{fig:de-casteljau}
+\caption{多层感知机的结构示意图}
+\label{fig:mlp}
+\end{figure}
+根据通用近似定理\cite{Hornik_1989}，只要给予网络足够多的神经元，MLP即可以任意精度逼近紧致集上的连续函数，
+这一理论奠定了MLP作为函数逼近器的数学基础。然而，传统MLP多用于处理向量化特征（如图像分类中的扁平化像素），
+其输入空间通常缺乏明确的几何语义。基于坐标的多层感知机（Coordinate-based MLPs）则突破了这一局限，
+通过将空间坐标直接作为网络输入，并引入傅里叶坐标编码（Fourier Positional Encoding）
+进行频域编码\cite{tancik2020fourier}，
+实现了对连续场函数的隐式建模，从而开创了三维几何与信号表示的新范式。
+
+具体而言，直接使用原始坐标作为输入会导致 MLP 呈现明显的频谱偏差问题\cite{pmlr-v97-rahaman19a}。由于网络倾向于优先学习低频信号，
+导致网络难以捕捉三维几何中的高频细节（如表面纹理、尖锐边缘等）。为此，研究者提出利用傅里叶坐标编码，
+将 $d$ 维坐标 $\mathbf{x}\in\mathbb{R}^d$ 通过傅里叶基函数投影至高维空间。
+傅里叶坐标编码可以由公式\eqref{eq:fourier_encoding}表示：
+\begin{equation}
+\gamma(\mathbf{x})=\left[\sin\left(2^0\pi \mathbf{x}\right),\cos\left(2^\pi \mathbf{x}\right),\ldots,\sin\left(2^{K-1}\pi \mathbf{x}\right),\cos\left(2^{K-1}\pi \mathbf{x}\right)\right]
+\label{eq:fourier_encoding}
+\end{equation}
+其中 $K$ 为预设的频率层级，通过指数增长的频率项构造多尺度频带。
+这种傅里叶坐标编码（Fourier Positional Encoding）使MLP能够显式访问不同频段的几何特征，
+有效解决了频谱偏差问题。在神经辐射场（NeRF）等典型应用中，该技术被证明是实现高质量三维重建的关键因素。
+
+\subsection{激活函数}
+
+通过上文的介绍我们知道，在多层神经网络中，隐藏层仅能进行线性变换，因此仅由隐藏层组成的线性模型只
+能拟合输入和输出之间的线性关系，无法处理非线性问题。为了增强模型的非线性表示能力，可以使用激活函数来加入非线性因素。
+由于不同类型的激活函数对提高网络的非线性表示能力不同，所以针对不同的任务需要选择适合的激活函数。
+当基于坐标的多层感知机使用ReLU等常见激活函数时，网络同样易于出现上文所述的频谱偏差问题。
+ReLU激活函数的基本表达式如公式\eqref{eq:relu}所示：
+\begin{equation}\label{eq:relu}
+\text{ReLU}(x)=
+\begin{cases}
+x, & x>0,\\[1mm]
+0, & x\leq 0.
+\end{cases}
+\end{equation}
+它在 $x>0$ 时具有线性函数的特征，而在 $x\leq 0$ 时则恒定为0，这样可以使部分神经元的输出为0，
+从而实现网络的稀疏性，缓解过拟合问题。此外，ReLU激活函数计算速度快，导数简单。
+但是，这种单侧抑制机制虽能提升模型稀疏性，但其频谱响应呈现强烈的低频偏好：ReLU的导数在正区间为常数1，
+负区间为0，其傅里叶变换能量集中于低频段。当应用于坐标输入时，ReLU的频谱偏差会抑制网络对高频几何细节
+（如曲面曲率、纹理梯度）的捕捉，导致重建结果过度平滑。
+
+为突破这一限制，Sitzmann等人\cite{sitzmann2020implicit}提出了SIREN（Sinusoidal Representation Networks），该网络创新性地采用正弦函数作为核心激活函数。
+正弦激活函数可以由公式\eqref{eq:siren}表示：
+\begin{equation}\label{eq:siren}
+\phi_i(x_i)=\sin\Bigl(\omega_0\,W_i\,x_i+b_i\Bigr)
+\end{equation}
+其中 $\omega_0$ 为可学习的频率缩放因子。正弦激活函数通过周期性振荡特性，为神经网络引入频谱调制能力。
+相较于ReLU，正弦函数的无限可微性及其导数的非零特性，使得网络可通过链式法则传递高频梯度信号，
+避免频谱能量衰减。而权重矩阵 $W_i$ 与频率因子 $\omega_0$ 共同调节输入信号的频域分布，
+使网络自适应平衡低频轮廓与高频细节的建模（如图\ref{fig:siren_compare}所示）。
+
+\begin{figure}[htb]
+  \centering
+  % 这里可以控制图片宽度比例
+  \includegraphics[width=0.6\linewidth]{Siren.png}
+  \caption{激活函数对比\cite{sitzmann2020implicit}}
+  \label{fig:siren_compare}
 \end{figure}
 
-绘制 $P_0$ 到 $P_3$ 曲线的代码示例如下所示：
+实验\cite{sitzmann2020implicit}表明，采用正弦激活的MLP在3D形状重建任务中可将PSNR提升3-5 dB，
+收敛速度加快5倍。这一突破性进展验证了激活函数频谱特性对隐式神经表示质量的决定性作用，
+也为物理场仿真、微分方程求解等需高阶导数连续性的任务提供了新范式。
 
-\begin{lstlisting}[language=python]
-% 返回这两点间线段的中点
-def midpoint((x1, y1), (x2, y2)):
-    return ((x1+x2)/2, (y1+y2)/2)
+\subsection{损失函数}
+【】【】这里还没写。
 
-% 绘制级别，可决定精细度
-MAX_LEVEL = 5
-def draw_curve(P0, P1, P2, P3, level=1):
-    % 当级别达到最大时，则绘制两点之间直线
-    if level == MAX_LEVEL:
-        d.line((P0, P3))
-    else:
-        L0 = P0
-        L1 = midpoint(P0, P1)
-        H  = midpoint(P1, P2)
-        R2 = midpoint(P2, P3)
-        R3 = P3
-        L2 = midpoint(L1, H)
-        R1 = midpoint(R2, H)
-        L3 = midpoint(L2, R1)
-        R0 = L3
-        % 绘制左半段贝塞尔曲线 L0-L1-L2-L3
-        draw_curve(L0, L1, L2, L3, level+1)
-        % 绘制右半段贝塞尔曲线 R0-R1-R2-R3
-        draw_curve(R0, R1, R2, R3, level+1)
+\subsection{自动编码器}
+自动编码器（Autoencoder）作为深度学习中重要的无监督学习架构，其核心思想源于对生物感知系统中信息压缩与重建机制的仿生模拟。
+该架构由对称的编码器（Encoder）与解码器（Decoder）网络构成，通过最小化输入数据与重建输出之间的差异，
+迫使网络学习数据本质特征的紧凑表示。从数学角度来看，自动编码器可以看作是一种将高维数据转换为低维表示的工具：
+编码器 $\mathcal{E}:\mathcal{X}\rightarrow\mathcal{Z}$ 将输入数据 $x\in\mathbb{R}^D$ 投影至 $z\in\mathbb{R}^d$ ，
+解码器 $\mathcal{D}:\mathcal{Z}\rightarrow\mathcal{X}$则试图从潜在编码重构原始输入 $\hat{x}=\mathcal{D}\left(\mathcal{E}\left(x\right)\right)$，
+其优化目标可以由公式\eqref{eq:ae_loss}给出：
+\begin{equation}\label{eq:ae_loss}
+\min_{\theta,\phi}E_{x\sim p_{\mathrm{dt}}}\Bigl[\bigl|x-\mathcal{D}_\phi\bigl(\mathcal{E}_\theta(x)\bigr)\bigr|^2\Bigr]
+\end{equation}
+其中$\theta$和$\phi$分别代表编码器与解码器的参数。这种方法不仅能在没有标注的数据中发现内在结构，而且在特征提取、
+降维和去噪等应用中取得了很好的效果。早期的研究\cite{Hinton_2006}发现，当网络使用非线性激活函数并对低维空间进行一定限制时，
+其能够有效地提取数据中的关键因素，比如在图像处理中自动识别边缘、纹理等重要视觉元素。
 
-% 根据输入的点绘制曲线
-draw_curve((10,10),(100,100),(100,10),(100,100))
-\end{lstlisting}
+同时，自动编码器在处理复杂的光照估计与可微渲染问题时也有重要的作用。自动编码器的优势在于能够从高维数据中提取出最关键的特征，
+并捕捉数据内在的低维结构。当我们面对真实世界的光照环境时（例如256\times256分辨率的环境贴图），
+传统方法直接在原始像素空间进行优化会遇到三个问题：其一，像素数可能高达数百万，导致梯度下降等优化算法容易陷入局部最优；
+其二，光照参数需要符合辐射度非负、能量守恒等物理规律，而仅仅依靠人工设计的正则项通常难以完全表达这些约束；
+其三，实际光照中存在一些低维特性（如色温分布、主要光源的方向偏好），但要显式建立这些规律需要精确的先验知识。
+
+因此，在可微渲染的任务里，自动编码器能够利用数据压缩的特性，通过编码器将高维环境贴图压缩到一个较低维的潜在空间，
+构建出紧凑的光照参数表示，从而大大降低了优化问题的维度。同时，解码器将潜在向量映射回满足物理规律的光照配置，
+确保优化过程中始终处于可行解范围内。这种“压缩-重建”机制实际上学习了一个数据驱动的光照投影操作，使得光照估计问题可以转化为在一个
+平滑且低维的空间中进行高效搜索。例如，在同时优化物体材质和光照时，只需要调整潜在空间中的少量参数，就能获得物理上合理的光照重构，
+而无需直接处理数百万维的像素数据。
+
+\section{传统渲染管线}
+本节介绍传统渲染管线的相关知识，为本文针对工作流进行光照分解补充相关背景知识。传统渲染管线中，
+数字资产通常由网格体和多张纹理贴图组成，其中，网格体表达了数字资产的几何形状，纹理贴图和各类参数表达了数字资产表面不同的光学属性。
+本节将介绍数字资产的制作和渲染过程，并解释数字资产与着色模型之间存在的耦合关系。
+
+\subsection{渲染方程}
 
 
-\section{本章小结}
+渲染方程（Rendering Equation）是计算机图形学中描述光与物体表面交互的基础方程之一。
+由Kajiya等人于1986年提出\cite{Kajiya_1986}，它为物体表面的光照计算提供了一个物理上合理的模型，
+广泛应用于真实感渲染和计算机图像生成中。渲染方程通过描述光从场景中的光源到达表面并反射到观察者的过程，
+计算表面点的辐射亮度（radiance）。具体计算过程如公式\eqref{eq:rendering_equation}：
+\begin{equation}\label{eq:rendering_equation}
+  L_o\left({\bf{x}},\omega_o\right)=\int_{\Omega}f_r\left({\bf{x}},\omega_i,\omega_o\right)\cdot L_i\left({\bf{x}},
+  \omega_i\right)\left(\omega_i\cdot\mathbf{n}\right)\,\mathrm{d}\omega_i
+\end{equation}
+其中，$L_o\left({\bf{x}},\omega_o\right)$表示从表面点$\bf{x}$沿观察方向$\omega_o$看到的辐射亮度，
+$L_i\left({\bf{x}},\omega_i\right)$是从入射方向$\omega_i$到达表面点$\bf{x}$的光源辐射亮度，
+$f_r\left({\bf{x}},\omega_i,\omega_o\right)$是BRDF，
+它决定了光线从入射方向$\omega_i$到反射方向$\omega_o$的散射方式，且依赖于表面的材质属性。
+$\left(\omega_i\cdot\bf{n}\right)$表示入射光与表面法线$\bf{n}$的点积，代表表面与光源的接触程度，
+而$\mathrm{d}\omega_i$是入射光方向的微小立体角元素。
 
-本章在第一节中介绍了...
-在第二节中介绍了...
+渲染方程的核心思想是通过积分所有可能的光源对表面反射的贡献，计算出最终的观察光照。
+其在实际应用中能够模拟多种光照现象，包括漫反射、镜面反射、折射以及其他复杂的光学效应。
+然而，尽管渲染方程具有强大的表达能力，但其高计算成本使得在实时渲染中难以直接应用。
+因此，许多基于渲染方程的模型需要进行简化或近似，以实现高效的图像生成。
+
+\subsection{着色模型}
+
+着色模型（Shading Model）是基于渲染方程的简化或近似，通常用于图形学中的实时渲染。其主要目标是通过简化光的反射过程，
+使得渲染计算更加高效。通过引入一定的数学公式和参数设置，着色模型能够近似真实世界中的光照现象，
+从而生成具有理想真实感或艺术效果的图像。
+着色模型的核心是描述光线与物体表面相互作用的数学函数，输入通常包括入射光线、视角、表面法线以及材质属性
+（如漫反射颜色、镜面反射强度、粗糙度等），输出则是某一点处的最终光照颜色或亮度。常见的着色模型包括：
+\fourthtitle{1}基于物理的着色模型：这些模型遵循物理定律，精确描述光照现象，通常依赖于双向反射分布函数。
+例如，Cook-Torrance模型[29] 通过微表面分布函数、几何遮蔽因子和Fresnel反射等参数，精确地模拟了金属和非金属表面的反射行为。基于物理的着色模型能够较为准确地模拟光的反射、折射和散射过程，生成更为真实的视觉效果。
+
+(2)	经验性（非物理）着色模型：这类模型通常采用简化或经验公式来近似光照计算，
+代表性的有Blinn-Phong模型和Lambertian模型。尽管它们并不完全遵循物理定律，
+但通过经验参数（如光泽度、反射系数等）的调控，依然能够生成具有一定真实感的光照效果。
+由于计算复杂度较低，经验性模型广泛应用于实时渲染或资源受限的场景。
+
+
