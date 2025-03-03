@@ -19,9 +19,9 @@
   %   可使用“\\”命令手动控制换行
   %
   % title  = {中国传媒大学硕士学位论文 \LaTeX{} 模板 v\version},
-  title  = {基于想不出名字所以随便装作轻小说标题的研究},
+  title  = {基于NeRF的数字资产解耦的设计与实现},
   % title* = {\LaTeX{} Thesis Template of Communication University of China v\version},
-  title* = {Research and Implementation of one Failed Love Comedy based on My Poor Youth},
+  title* = {Design and Implementation of Digital Asset Decoupling Based on NeRF},
   %
   % 学位
   %   1. 学术型
@@ -62,8 +62,8 @@
   %
   % 姓名
   %
-  author  = {云游君},
-  author* = {YunYouJun},
+  author  = {薛一凡},
+  author* = {Yifan Xue},
   %
   % 指导教师
   %   中文姓名和职称之间以英文逗号“,”分开，下同
@@ -124,6 +124,9 @@
 % \usepackage{nomencl}
 % \makenomenclature
 
+% 分条论述
+\usepackage{enumitem}
+
 % 表格加脚注
 \usepackage{threeparttable}
 
@@ -178,6 +181,10 @@
   \fi
 }
 \makeatother
+
+\newcommand{\fourthtitle}[1]{%
+  \noindent{（#1）}%
+}
 
 % hyperref 宏包在最后调用
 \usepackage{hyperref}
