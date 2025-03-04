@@ -387,7 +387,7 @@ f_d=\frac{1}{\pi}
 同时获得足够精确的视觉效果。分裂和近似的思想可以由公式\eqref{eq:int_approx}表示：
 
 \begin{equation}
-  \int f(x)g(x){\rm{d}}x\approx\int f(x){\rm{d}}x\int g(x){\rm{d}}x
+  \int f(x)g(x){\rm{d}}x\approx \int{f(x){\rm{d}}x} \int{g(x){\rm{d}}x}
   \label{eq:int_approx}
 \end{equation}
 
@@ -526,7 +526,8 @@ $T\left(t\right)$是体密度函数，$r\left(s\right)$是光线路径上的点�
 
 本节介绍与NeRF技术相关的一系列研究领域中，用来评估网络生成质量的常用衡量指标。
 
-\fourthtitle{1} 峰值信噪比
+\subsubsection*{（1）峰值信噪比} 
+
 峰值信噪比（Peak Signal-to-noise Ratio，PSNR）是一种基于均方误差（Mean-square Error，MSE）
 来计算图像之间绝对差异的方法，其计算过程简单直观，能够有效反映图像重构过程中细节信息的丢失或噪声引入问题，
 PSNR的高低直接揭示了光照输出图像与原始真实图像在整体灰度层面上的恢复效果。
@@ -540,7 +541,7 @@ PSNR的高低直接揭示了光照输出图像与原始真实图像在整体灰�
 \end{equation}
 这里$I$和$K$分别代表原始图像和重建图像，$m\times n$为图像尺寸。
 
-\fourthtitle{2} 结构相似性指标
+\subsubsection*{（2）结构相似性指标} 
 
 尽管PSNR在衡量像素级误差方面具有优势，但它无法全面捕捉图像中人眼感知的结构信息。
 为此，本文同时采用了结构相似性指标（Structural Similarity，SSIM）来补充评估。
@@ -551,7 +552,8 @@ SSIM从亮度、对比度和局部结构三个方面对图像相似性进行综�
 \end{equation}
 其中，$l(x,y)$、$c(x,y)$、$s(x,y)$分别用于衡量亮度、颜色和对比度差异，各部分的权重$\alpha$、$\beta$、$\gamma$通常被设定为1，使得整体SSIM值介于0到1之间，其中1代表两幅图像完全相同。
 
-\fourthtitle{3} 学习感知图像块相似度
+\subsubsection*{（3）学习感知图像块相似度} 
+
 学习感知图像块相似度（Learned Perceptual Image Patch Similarity，LPIPS）是一种基于深度学习的图像质量评价指标，
 旨在从人类视觉感知的角度衡量两幅图像之间的差异。与PSNR和SSIM等传统方法不同，LPIPS通过预训练的卷积神经网络
 （Convolutional Neural Network，CNN）提取图像的高层语义特征，并在特征空间中计算图像块的感知相似性。
