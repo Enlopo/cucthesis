@@ -476,6 +476,44 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \subsection{完整管线实验}
 
 本节将该光照网络接入至本文第三章所设计的管线，并横向对比了与本文类似的工作进行定量定性的实验。
-图\ref{fig:}展示了NeRD\cite{Boss_2021}、nvdiffrecm\cite{10.5555/3600270.3601931}与本文管线效果的对比，
+图\ref{fig:}展示了NeRD\cite{Boss_2021}、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
 尤其是在阴影覆盖的区域中，本文能够较好地还原场景表面细节。比如Lego场景中，
 红色线框和蓝色线框中的细节均能成功还原。
+
+\begin{figure}[htbp]
+  \centering
+  \renewcommand{\arraystretch}{1} % 调整表格行距
+  \setlength{\tabcolsep}{3pt} % 调整列间距
+
+  \begin{tabular}{c c c c c} 
+      & NeRD\cite{Boss_2021} & nvdiffremc\cite{10.5555/3600270.3601931} & Ours & GT\\
+
+      \raisebox{2.5\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/diff.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/diff.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/diff.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/diff.png}} \\
+
+      \raisebox{2\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/spec.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/spec.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/spec.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/spec.png}} \\
+
+      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/gloss.png}} \\
+
+      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/gloss.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/gloss.png}} \\
+
+  \end{tabular}
+
+  \caption{Specular工作流分解效果}
+  \label{fig:specular_show}
+\end{figure}
