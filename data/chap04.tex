@@ -118,7 +118,7 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
 
 \subsection{基于阴影调制模块的光照表示网络}
 
-基于上述结构，本文设计了基于阴影调制模块的光照表示网络，其核心思想是将阴影系数$s$作为额外的标量参数调制到网络中。
+基于上述结构，本文设计了基于阴影调制模块的光照表示网络（Shadow-aware Neural Light，SaNL），其核心思想是将阴影系数$s$作为额外的标量参数调制到网络中。
 当阴影系数为1时，在该模块的调制下，本文的网络将退化为一张环境光照贴图，其输出将全部为环境光照。
 当阴影系数为0时，则使本文的网络输出为直接光照的光照强度及颜色。该网络的结构如\ref{fig:nl_main_cn}所示，
 其接收入射光照的方向$\omega_i$作为输入，随后先调制阴影系数$s$，并在后续的层中逐步调制光照嵌入向量$\bf{z}^l$，
@@ -272,7 +272,210 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \begin{figure}[htb]
   \centering
   % 这里可以控制图片宽度比例
-  \includegraphics[width=0.8\linewidth]{ch4/data_set/full_pipe.png}
+  \includegraphics[width=0.6\linewidth]{ch4/data_set/full_pipe.png}
   \caption{数据集完整收集流程}
   \label{fig:full_pipe}
 \end{figure}
+
+\section{基于SaNL的解耦管线实现}
+
+前文中，我们通过实验结果分析了管线无法处理阴影的原因，随后根据问题设计了SaNL，并收集了对应的数据进行训练。
+本节将使用SaNL作为光照表示技术，实现数字资产解耦管线，以提升管线的分解效果。
+
+\subsection{阴影系数}
+
+由于本文第三章所设计的管线并不支持对阴影的建模，而SaNL的输入依赖于直接光照所产生的投影作为阴影系数$s$，
+因此有必要对阴影建模进行额外的实现和处理。现有的部分NeRF分解管线支持阴影的计算，
+但部分工作需要已知光源信息才能对直接光照的投影进行计算，而另外一些工作则依赖额外的光线追踪阶段。
+这些方法通常是为了适用于复杂的光照条件，由于本文的研究目标是对数字资产的合成数据进行分解，
+输入数据的光照环境在实验中更具有可控性，相比于真实数据中实时变化的光照条件，这为阴影系数的建模提供了有利的条件。
+
+因此，在每张输入图像的光照条件不变的前提下，阴影系数可以被视为覆盖场景各处的贴图，
+这一方法类似于传统渲染技术中常见的烘焙光照贴图技术（Baked Light Map）。
+烘焙光照贴图的基本原理是通过对场景的几何结构和特定的光照条件进行预计算，将光照、阴影信息存储在一张纹理图中，
+其中每个像素值表示相应区域所接受的入射光照强度，如图\ref{fig:baked_light_map}所示。这种方法能够有效减少实时渲染中的计算负担，
+因为阴影信息已经在渲染前通过烘焙过程完成了计算。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=6cm,keepaspectratio]{ch4/baked_light_map/scene.png}
+    \caption{复杂光照的场景}
+  \end{subfigure}
+  \hspace{0.05\textwidth} % 添加间隔
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[height=6cm,keepaspectratio]{ch4/baked_light_map/light map.png}
+    \caption{光照和阴影的烘焙结果}
+  \end{subfigure}
+  \caption{烘焙光照贴图技术}
+  \label{fig:baked_light_map}
+\end{figure}
+
+本文采用了类似的策略，将阴影系数表示为一张灰度贴图，利用\ref{sec:mlp_texture}中所述的MLP纹理来进行估计。
+另外，考虑到在本课题的设置中，光照网络已经完成了一次阴影的计算，因此在最终的着色过程中，
+不再需要重复计算阴影。阴影的计算及输出如图\ref{fig:shadow_mapping}所示，阴影区域能够得到正确的区分。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.27\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch4/shadow/gt.png}
+    \caption{原场景}
+  \end{subfigure}
+  \hspace{0.05\textwidth} % 添加间隔
+  \begin{subfigure}[c]{0.27\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch4/shadow/shadow.png}
+    \caption{场景阴影系数}
+  \end{subfigure}
+  \hspace{0.05\textwidth} % 添加间隔
+  \begin{subfigure}[c]{0.27\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch4/shadow/shadow_texture.png}
+    \caption{阴影系数纹理}
+  \end{subfigure}
+  \caption{阴影系数的计算}
+  \label{fig:shadow_mapping}
+\end{figure}
+
+
+\section{整体管线结构}
+
+\section{实验结果与分析}
+
+在前四节中，本文通过新颖的阴影调制模块实现了SaNL，能够在表示光照的同时将阴影与直接光照的信息进行建模。
+随后，本文将SaNL加入第三章的数字资产管线，以提升对网格体和表面属性分解的效果。在这一节中，
+本文将首先对SaNL进行全面的实验，以验证其对光照的表示能力。随后，
+本文将带有SaNL的数字资产解耦管线与相关研究进行横向的定量定性对比，以显示本文方法的优越性。
+最后，本节还对管线进行了定量定性的消融实验，进一步说明了本文相关方法的工作原理和有效性。
+
+\subsection{网络光照输出结果}
+在本节中，本文通过实验展示了光照网络的输出效果。实验环境设置为几何形状和阴影已知，监督信号为真实的带阴影光照效果。
+本实验展示了光照网络在不同的环境贴图下的输出结果，如图\ref{fig:SaNL_result}所示。
+
+\begin{figure}[htbp]
+  \centering
+  \renewcommand{\arraystretch}{1}
+  \setlength{\tabcolsep}{3pt}
+
+  \begin{tabular}{c @{\hspace{10pt}} c c @{\hspace{10pt}} c c @{\hspace{10pt}} c c @{\hspace{10pt}} c c} 
+      & \multicolumn{2}{c}{Peak} 
+      & \multicolumn{2}{c}{Forest} 
+      & \multicolumn{2}{c}{Sunset} 
+      & \multicolumn{2}{c}{Ginko} \\ [2mm]
+
+      & \multicolumn{2}{c}{\includegraphics[width=0.12\textwidth]{ch4/sanl_full_result/Peak.png}} 
+      & \multicolumn{2}{c}{\includegraphics[width=0.12\textwidth]{ch4/sanl_full_result/Forest.png}}
+      & \multicolumn{2}{c}{\includegraphics[width=0.12\textwidth]{ch4/sanl_full_result/Sunset.png}}
+      & \multicolumn{2}{c}{\includegraphics[width=0.12\textwidth]{ch4/sanl_full_result/Ginko.png}} \\ [1mm]
+
+      \raisebox{1.8\height}{\rotatebox[origin=c]{90}{Sofa}} & 
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Peak_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Peak_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Forest_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Forest_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Sunset_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Sunset_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Ginko_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Sofa/Ginko_Ours.png}} \\
+
+      \raisebox{0.9\height}{\rotatebox[origin=c]{90}{Umbrella}} & 
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Peak_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Peak_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Forest_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Forest_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Sunset_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Sunset_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Ginko_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Umbrella/Ginko_Ours.png}} \\
+
+      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Skull}} & 
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Peak_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Peak_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Forest_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Forest_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Sunset_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Sunset_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Ginko_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Skull/Ginko_Ours.png}} \\
+
+      \raisebox{1.8\height}{\rotatebox[origin=c]{90}{Girl}} & 
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Peak_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Peak_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Forest_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Forest_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Sunset_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Sunset_Ours.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Ginko_GT.png}} &
+      \subfloat{\includegraphics[width=0.1\textwidth]{ch4/sanl_full_result/Girl/Ginko_Ours.png}} \\ [1mm]
+
+      & GT & Ours & GT & Ours & GT & Ours & GT & Ours \\
+  \end{tabular}
+
+  \caption{SaNL输出结果}
+  \label{fig:SaNL_result}
+\end{figure}
+
+图\ref{fig:sanl_single_compare}则展示了本文网络的放大对比，可以看到SaNL在阴影处能够较好地还原环境贴图的细节，
+实现了按照阴影系数对直接光照和环境光照进行区分的目标，并且在直接光照部分保持了原输入的色温及亮度。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Girl/GT.png}
+    \caption{GT}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Girl/Ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \hspace{0.02\textwidth} % 添加间隔
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Girl/Env.png}
+    \caption{环境贴图局部}
+  \end{subfigure}
+  \caption{局部放大对比}
+  \label{fig:sanl_single_compare}
+\end{figure}
+
+图\ref{fig:sanl_single_compare_failure}展示了SaNL的失败案例，在这张环境纹理中，亮度和饱和度差异较低，
+同时考虑到输入网格体的椅背部分反射角度近似，但是部分位于阴影中、部分暴露于直接光照之下，
+因此网络难以区分直接光照和环境光照，导致高频细节还原失败，同时阴影处着色不正确。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Chair/GT.png}
+    \caption{GT}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Chair/Ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \hspace{0.02\textwidth} % 添加间隔
+  \begin{subfigure}[c]{0.23\textwidth}
+    \centering
+    \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Chair/Env.png}
+    \caption{环境贴图局部}
+  \end{subfigure}
+  \caption{失败案例}
+  \label{fig:sanl_single_compare_failure}
+\end{figure}
+
+\subsection{完整管线实验}
+
+本节将该光照网络接入至本文第三章所设计的管线，并横向对比了与本文类似的工作进行定量定性的实验。
+图\ref{fig:}展示了NeRD\cite{Boss_2021}、nvdiffrecm\cite{10.5555/3600270.3601931}与本文管线效果的对比，
+尤其是在阴影覆盖的区域中，本文能够较好地还原场景表面细节。比如Lego场景中，
+红色线框和蓝色线框中的细节均能成功还原。

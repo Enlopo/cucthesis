@@ -92,7 +92,7 @@ L_{reg}=\sum_{i,j\in\mathbb{S}_e}\Bigl[H\bigl(\sigma(s_i),\mathrm{sign}(s_j)\big
 在后文的实验中，本文将通过定性的实验，验证该方法对于下游任务的适用性，
 并通过定量的消融实验，解释并证明以上损失函数的工作原理及有效性。
 
-\subsection{MLP纹理}
+\subsection{MLP纹理} \label{sec:mlp_texture}
 由于本文旨在使用任意工作流所对应的标准进行NeRF光照分解，因此有必要设计一种足够灵活、
 易于拓展的实现方式。本文使用MLP来估计表面反射属性，以类似于体积纹理的方式建立不同的属性，
 并按照通道重新划分输出用于后续的渲染步骤。
@@ -430,7 +430,7 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/everything.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_lap.png}} \\
-      Ours & Ours w/o $\lambda_{\rm{normal}}$ & Ours w/o $\lambda_{\rm{laplacian}}$ \\
+      Ours & Ours w/o $\mathcal{L}_{\rm{normal}}$ & Ours w/o $\mathcal{L}_{\rm{laplacian}}$ \\
 
   \end{tabular}
 

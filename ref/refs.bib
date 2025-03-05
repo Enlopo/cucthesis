@@ -188,6 +188,20 @@
   month     = jun,
   pages     = {8270–8280}
 }
+@inproceedings{10.5555/3600270.3601931,
+  author    = {Hasselgren, Jon and Hofmann, Nikolai and Munkberg, Jacob},
+  title     = {Shape, light, and material decomposition from images using Monte Carlo rendering and denoising},
+  year      = {2022},
+  isbn      = {9781713871088},
+  publisher = {Curran Associates Inc.},
+  address   = {Red Hook, NY, USA},
+  abstract  = {Recent advances in differentiable rendering have enabled high-quality reconstruction of 3D scenes from multi-view images. Most methods rely on simple rendering algorithms: pre-filtered direct lighting or learned representations of irradiance. We show that a more realistic shading model, incorporating ray tracing and Monte Carlo integration, substantially improves decomposition into shape, materials \& lighting. Unfortunately, Monte Carlo integration provides estimates with significant noise, even at large sample counts, which makes gradient-based inverse rendering very challenging. To address this, we incorporate multiple importance sampling and denoising in a novel inverse rendering pipeline. This improves convergence and enables gradient-based optimization at low sample counts. We present an efficient method to jointly reconstruct geometry (explicit triangle meshes), materials, and lighting, which substantially improves material and light separation compared to previous work. We argue that denoising can become an integral part of high quality inverse rendering pipelines.},
+  booktitle = {Proceedings of the 36th International Conference on Neural Information Processing Systems},
+  articleno = {1661},
+  numpages  = {14},
+  location  = {New Orleans, LA, USA},
+  series    = {NIPS '22}
+}
  @inproceedings{Srinivasan_2021,
   title     = {NeRV: Neural Reflectance and Visibility Fields for Relighting and View Synthesis},
   booktitle = {2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
