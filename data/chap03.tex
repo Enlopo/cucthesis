@@ -418,21 +418,19 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
   \renewcommand{\arraystretch}{1} % 调整表格行距
   \setlength{\tabcolsep}{3pt} % 调整列间距
 
-  \begin{tabular}{c c c c} 
-      \raisebox{2.5\height}{\rotatebox[origin=c]{90}{Ours}} & % 关键修改
+  \begin{tabular}{c c c} 
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/mesh/everything_circle.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/mesh/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/mesh/wo_lap.png}} \\
 
-      \raisebox{2\height}{\rotatebox[origin=c]{90}{Ours w/o $\lambda_{\rm{normal}}$}} & % 关键修改
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/wired/everything.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/wired/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/wired/wo_lap.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Ours w/o $\lambda_{\rm{laplacian}}$}} & % 关键修改
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/everything.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_lap.png}} \\
+      Ours & Ours w/o $\lambda_{\rm{normal}}$ & Ours w/o $\lambda_{\rm{laplacian}}$ \\
 
   \end{tabular}
 
@@ -446,6 +444,7 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
 
 \begin{table}[h]
   \centering
+  \caption{不同损失函数的定量消融实验结果}
   \begin{tabular}{l ccc}
       \toprule
       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
@@ -455,6 +454,5 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
       Ours w/o $\mathcal{L}_{laplacian}$ & 27.25 & 0.057 & 0.939 \\
       \bottomrule
   \end{tabular}
-  \caption{不同损失函数的定量消融实验结果}
   \label{tab:loss_ablation}
 \end{table}
