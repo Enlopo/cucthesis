@@ -436,7 +436,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
     \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Girl/Ours.png}
     \caption{Ours}
   \end{subfigure}
-  \hspace{0.02\textwidth} % 添加间隔
+  \hspace{0.05\textwidth} % 添加间隔
   \begin{subfigure}[c]{0.23\textwidth}
     \centering
     \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Girl/Env.png}
@@ -463,7 +463,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
     \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Chair/Ours.png}
     \caption{Ours}
   \end{subfigure}
-  \hspace{0.02\textwidth} % 添加间隔
+  \hspace{0.05\textwidth} % 添加间隔
   \begin{subfigure}[c]{0.23\textwidth}
     \centering
     \includegraphics[height=5cm,keepaspectratio]{ch4/sanl_single_compare/Chair/Env.png}
@@ -488,32 +488,133 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \begin{tabular}{c c c c c} 
       & NeRD\cite{Boss_2021} & nvdiffremc\cite{10.5555/3600270.3601931} & Ours & GT\\
 
-      \raisebox{2.5\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/diff.png}} \\
+      \raisebox{2.7\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/lego/nerd.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/lego/nvdiffrecmc.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/lego/ours.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/lego/GT_tagged.png}} \\
 
-      \raisebox{2\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/spec.png}} \\
+      \raisebox{2.2\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Hotdog/nerd.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Hotdog/nvdiffrecmc.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Hotdog/ours.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Hotdog/GT_tagged.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/gloss.png}} \\
+      \raisebox{1.7\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Materials/nerd.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Materials/nvdiffrecmc.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Materials/ours.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Materials/GT_tagged.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/gloss.png}} \\
+      \raisebox{3.2\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Mic/nerd.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Mic/nvdiffrecmc.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Mic/ours.png}} &
+      \subfloat{\includegraphics[width=0.22\textwidth]{ch4/full_pipe/Mic/GT_tagged.png}} \\
 
   \end{tabular}
 
-  \caption{Specular工作流分解效果}
+  \caption{渲染结果横向比较}
   \label{fig:specular_show}
 \end{figure}
+
+表\ref{tab:dataset_comparison}展示了本文方法与其它方法的定量比较结果。其中，NeRF-Synthetic数据集、NeRFactor数据集为合成数据，
+NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结果，本文管线在以上数据集中均取得了最优的成绩，可以证明本文方法的优越性。
+
+\begin{table}[h]
+  \centering
+  \caption{渲染结果定量比较}
+  \begin{tabular}{l ccc ccc ccc}
+      \toprule
+      & \multicolumn{3}{c}{NeRF-Synthetic} & \multicolumn{3}{c}{NeRD Dataset} & \multicolumn{3}{c}{DTU Dataset} \\
+      \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+      \midrule
+      NeRD & & & & & & & & & \\
+      nvdiffrecmc & 26.35 & 0.097 & 0.910 & 25.58 & 0.081 & 0.918 & 25.78 & 0.088 & 0.912 \\
+      \textbf{Ours} & \textbf{29.03} & \textbf{0.053} & \textbf{0.948} & \textbf{25.70} & \textbf{0.091} & \textbf{0.921} & \textbf{29.42} & \textbf{0.053} & \textbf{0.947} \\
+      \bottomrule
+  \end{tabular}
+  \label{tab:dataset_comparison}
+\end{table}
+
+图\ref{fig:rendering_detail_compare}展示了管线导出的网格体效果对比。本文的管线不仅在阴影处取得了更好的重建效果，
+同时也能够较为准确地对履带等阴影处的细节进行重建。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.32\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours_full.png}
+    \caption{Our Results}
+  \end{subfigure}
+  \hspace{1mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nerd.png}
+    \caption{NeRD}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nvdiffrecmc.png}
+    \caption{nvdiffremc}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/GT.png}
+    \caption{GT}
+  \end{subfigure}
+  \caption{渲染结果细节对比}
+  \label{fig:rendering_detail_compare}
+\end{figure}
+
+图\ref{fig:}展示了管线导出的网格体效果对比。NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在阴影处错误估计了几何形状。
+本文的管线不仅在阴影处取得了更好的重建效果，同时也能够较为准确地对履带等阴影处的细节进行重建。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.32\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours_full.png}
+    \caption{Our Results}
+  \end{subfigure}
+  \hspace{1mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nerd.png}
+    \caption{NeRD}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nvdiffrecmc.png}
+    \caption{nvdiffremc}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \hspace{0.3mm} % 添加间隔
+  \begin{subfigure}[c]{0.16\textwidth}
+    \centering
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/GT.png}
+    \caption{GT}
+  \end{subfigure}
+  \caption{网格体导出效果对比}
+  \label{fig:mesh_export_compare}
+\end{figure}
+
+
+
