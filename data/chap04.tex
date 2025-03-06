@@ -61,7 +61,6 @@ $L_i\left(\mathbf{x},\omega_i\right)$简化为$L(\omega_i)$，
 为了改进这一点，本文考虑了上文所述的传统即时渲染中对IBL技术的应用方式，即仅将IBL作为完整光照的一部分补充，
 用于增加阴影处的细节，记作环境光照$L_{env}$。而物体主要被直接光所照亮，记作$L_{direct}$。
 本文中对直接光和环境光的分配可以由公式\eqref{eq:li_shadow}表示：
-
 \begin{equation}
   \label{eq:li_shadow}
   L_i=\left(1-s\right)L_{\rm{direct}}+sL_{\rm{env}},
@@ -476,7 +475,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \subsection{完整管线实验}
 
 本节将该光照网络接入至本文第三章所设计的管线，并横向对比了与本文类似的工作进行定量定性的实验。
-图\ref{fig:}展示了NeRD\cite{Boss_2021}、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
+图\ref{fig:full_rendering_result}展示了NeRD\cite{Boss_2021}、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
 尤其是在阴影覆盖的区域中，本文能够较好地还原场景表面细节。比如Lego场景中，
 红色线框和蓝色线框中的细节均能成功还原。
 
@@ -515,7 +514,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \end{tabular}
 
   \caption{渲染结果横向比较}
-  \label{fig:specular_show}
+  \label{fig:full_rendering_result}
 \end{figure}
 
 表\ref{tab:dataset_comparison}展示了本文方法与其它方法的定量比较结果。其中，NeRF-Synthetic数据集、NeRFactor数据集为合成数据，
@@ -549,25 +548,24 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
     \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours_full.png}
     \caption{Our Results}
   \end{subfigure}
-  \hspace{1mm} % 添加间隔
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
     \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nerd.png}
     \caption{NeRD}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
     \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nvdiffrecmc.png}
     \caption{nvdiffremc}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
     \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours.png}
     \caption{Ours}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
     \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/GT.png}
@@ -577,7 +575,7 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
   \label{fig:rendering_detail_compare}
 \end{figure}
 
-图\ref{fig:}展示了管线导出的网格体效果对比。NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在阴影处错误估计了几何形状。
+图\ref{fig:mesh_export_compare}展示了管线导出的网格体效果对比。NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在阴影处错误估计了几何形状。
 本文的管线不仅在阴影处取得了更好的重建效果，同时也能够较为准确地对履带等阴影处的细节进行重建。
 
 \begin{figure}[H]
@@ -585,35 +583,77 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
   % 这里可以控制图片宽度比例
   \begin{subfigure}[c]{0.32\textwidth}
     \centering
-    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours_full.png}
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/mesh_detail/ours_result.png}
     \caption{Our Results}
   \end{subfigure}
-  \hspace{1mm} % 添加间隔
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
-    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nerd.png}
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/mesh_detail/nerd.png}
     \caption{NeRD}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
-    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/nvdiffrecmc.png}
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/mesh_detail/nvdiffrecmc.png}
     \caption{nvdiffremc}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
-    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/ours.png}
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/mesh_detail/ours.png}
     \caption{Ours}
   \end{subfigure}
-  \hspace{0.3mm} % 添加间隔
+  \hspace{0.1mm}
   \begin{subfigure}[c]{0.16\textwidth}
     \centering
-    \includegraphics[height=5.1cm,keepaspectratio]{ch4/rendering_detail/GT.png}
+    \includegraphics[height=5.1cm,keepaspectratio]{ch4/mesh_detail/GT.png}
     \caption{GT}
   \end{subfigure}
   \caption{网格体导出效果对比}
   \label{fig:mesh_export_compare}
+\end{figure}
+
+\subsection{SaNL消融实验}
+
+本节将通过消融实验，证明SaNL在数字资产解耦任务中的有效性。图\ref{fig:}展示了本文管线使用及不使用SaNL时，
+在Metallic工作流中对Albedo分解效果的对比。可以清晰地看到，在阴影处的Albedo可以准确地还原物体原本的颜色，
+准确地区分出了浅色物体和深色物体，并且有准确的白平衡。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch4/sanl_ablation/albedo/ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch4/sanl_ablation/albedo/wo.png}
+    \caption{w/o SaNL}
+  \end{subfigure}
+  \caption{Albedo输出消融实验结果}
+  \label{fig:albedo_ablation}
+\end{figure}
+
+图\ref{fig:mesh_ablation}为管线网格体输出的输出结果。在阴影中的盘子得到了准确平滑的还原，
+而不使用SaNL时则将盘子上的阴影错误地处理为了几何结构，导致重建结果不佳。
+
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch4/sanl_ablation/mesh/ours.png}
+    \caption{Ours}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.47\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch4/sanl_ablation/mesh/wo.png}
+    \caption{w/o SaNL}
+  \end{subfigure}
+  \caption{网格体输出消融实验结果}
+  \label{fig:mesh_ablation}
 \end{figure}
 
 

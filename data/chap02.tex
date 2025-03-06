@@ -8,7 +8,7 @@
 \section{深度学习基础}
 【这里应该加点引言之类的】
 \subsection{基于坐标的多层感知机}
-多层感知机（Multilayer Perceptron, MLP）作为深度学习的基础模型，由感知机推广而来，
+多层感知机（Multilayer Perceptron，MLP）作为深度学习的基础模型，由感知机推广而来，
 本质是一种前馈神经网络。MLP由多个神经元层组成，每个神经元的结构如图~\ref{fig:neuron}所示，其接收多个输入值，
 并按照自身权重进行加权求和，接着，使用激活函数对其进行非线性变换，并将变换后的值传递给下一层神经元。
 
@@ -121,45 +121,142 @@
 通过上文的介绍我们知道，在多层神经网络中，隐藏层仅能进行线性变换，因此仅由隐藏层组成的线性模型只
 能拟合输入和输出之间的线性关系，无法处理非线性问题。为了增强模型的非线性表示能力，可以使用激活函数来加入非线性因素。
 由于不同类型的激活函数对提高网络的非线性表示能力不同，所以针对不同的任务需要选择适合的激活函数。
-当基于坐标的多层感知机使用ReLU等常见激活函数时，网络同样易于出现上文所述的频谱偏差问题。
-ReLU激活函数的基本表达式如公式\eqref{eq:relu}所示：
-\begin{equation}\label{eq:relu}
-\text{ReLU}(x)=
-\begin{cases}
-x, & x>0,\\[1mm]
-0, & x\leq 0.
-\end{cases}
-\end{equation}
-它在 $x>0$ 时具有线性函数的特征，而在 $x\leq 0$ 时则恒定为0，这样可以使部分神经元的输出为0，
-从而实现网络的稀疏性，缓解过拟合问题。此外，ReLU激活函数计算速度快，导数简单。
-但是，这种单侧抑制机制虽能提升模型稀疏性，但其频谱响应呈现强烈的低频偏好：ReLU的导数在正区间为常数1，
-负区间为0，其傅里叶变换能量集中于低频段。当应用于坐标输入时，ReLU的频谱偏差会抑制网络对高频几何细节
-（如曲面曲率、纹理梯度）的捕捉，导致重建结果过度平滑。
+多层感知机使用的常见激活函数有Sigmoid函数，ELU（Exponential Linear Unit）以及ReLU（Rectified Linear Unit）。
 
-为突破这一限制，Sitzmann等人\cite{sitzmann2020implicit}提出了SIREN（Sinusoidal Representation Networks），该网络创新性地采用正弦函数作为核心激活函数。
-正弦激活函数可以由公式\eqref{eq:siren}表示：
+\fourthtitle{1}Sigmoid激活函数
+
+Sigmoid激活函数是一种平滑的奇函数，该函数与其导数的计算方式如公式\ref{eq:sigmoid}所示：
+\begin{equation}
+  \begin{aligned}
+  \text{Sigmoid}(x) &= \frac{1}{1+e^{-x}}, \\
+  \text{Sigmoid}'(x) &= \text{Sigmoid}(x)\Bigl(1-\text{Sigmoid}(x)\Bigr).
+  \end{aligned}
+  \label{eq:sigmoid}
+\end{equation}
+
+Sigmoid函数的图像如图\ref{fig:sigmoid}所示，其输出范围在$(0,1)$之间，可以将任意实数映射到有限区间，
+实现非线性变换。它曾广泛用于早期的神经网络，但当输入值较大或较小时，Sigmoid的导数会趋近于0，
+有可能会导致深层网络出现梯度爆炸的问题。其次，由于Sigmoid的输出始终为正数，反向传播时，
+所有层的权重更新方向相同。如果模型的最优权重包含正负值，这种更新方式降低训练过程的效率，影响收敛速度。
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/sigmoid.png}
+    \caption{Sigmoid函数图像}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/dsigmoid.png}
+    \caption{Sigmoid函数导数图像}
+  \end{subfigure}
+  \caption{Sigmoid激活函数及其导数图像}
+  \label{fig:sigmoid}
+\end{figure}
+
+\fourthtitle{2} ReLU激活函数
+
+ReLU激活函数由Nair等人\cite{Nair_Hinton_2010}提出，是一种分段函数，其基本表达式如公式\eqref{eq:relu}所示：
+\begin{equation}
+  \begin{aligned}
+  \text{ReLU}(x) &= \begin{cases}
+    0, & x < 0, \\
+    x, & x > 0.
+    \end{cases}
+  \text{ReLU}'(x) &= \begin{cases}
+  0, & x < 0, \\
+  1, & x > 0.
+  \end{cases}
+  \end{aligned}
+  \label{eq:relu}
+\end{equation}
+
+ReLU函数的图像如图\ref{fig:relu}所示，该函数近年来应用广泛。相较于Sigmoid函数，ReLU无需指数计算，因此计算效率更高。
+同时，当输入大于0时，ReLU的导数始终为1，可以缓解梯度爆炸；当输入小于0时，ReLU输出为0，使得部分神经元不参与计算，
+能够增强网络的稀疏性，但此时ReLU导数也为0，因此可能会导致某些神经元“死亡”，影响网络的训练和收敛。
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/relu.png}
+    \caption{ReLU函数图像}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/drelu.png}
+    \caption{ReLU函数导数图像}
+  \end{subfigure}
+  \caption{ReLU激活函数及其导数图像}
+  \label{fig:relu}
+\end{figure}
+
+\fourthtitle{3} Elu激活函数
+
+Elu激活函数由Clevert等人\cite{ClevertUH15}提出，旨在解决ReLU导致的神经元“死亡”问题，其计算方式如公式\eqref{eq:elu}所示：
+\begin{equation}
+  \begin{aligned}
+  \text{ELU}(x) &= \begin{cases}
+  x, & x \geq 0, \\
+  \alpha \left(e^x - 1\right), & x < 0,
+  \end{cases} \\
+  \text{ELU}'(x) &= \begin{cases}
+  1, & x \geq 0, \\
+  \alpha e^x, & x < 0.
+  \end{cases}
+  \end{aligned}
+  \label{eq:elu}
+\end{equation}
+
+Elu函数的图像如图\ref{fig:elu}所示。当输入大于0时，该函数行为类似于ReLU，其导数接近1，有助于保持梯度稳定，加快收敛速度；
+当输入小于0时，Elu采用指数函数进行平滑衰减，使得激活值可以为负，有助于减少神经元“死亡”的情况。
+同时，Elu函数引入了额外的超参数$\alpha$来控制负值部分的衰减程度。
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/elu.png}
+    \caption{Elu函数图像}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{ch2/activation_function/delu.png}
+    \caption{Elu函数导数图像}
+  \end{subfigure}
+  \caption{Elu激活函数及其导数图像}
+  \label{fig:elu}
+\end{figure}
+
+\fourthtitle{4} SIREN激活函数
+
+在基于坐标的多层感知机（MLP）中，传统激活函数往往导致网络学习过程中的频谱偏差问题。
+为突破这一限制，Sitzmann 等人\cite{sitzmann2020implicit} 提出了SIREN（Sinusoidal Representation Networks），
+其核心创新在于采用正弦函数作为激活函数。SIREN的激活函数定义如下：
 \begin{equation}\label{eq:siren}
 \phi_i(x_i)=\sin\Bigl(\omega_0\,W_i\,x_i+b_i\Bigr)
 \end{equation}
-其中 $\omega_0$ 为可学习的频率缩放因子。正弦激活函数通过周期性振荡特性，为神经网络引入频谱调制能力。
-相较于ReLU，正弦函数的无限可微性及其导数的非零特性，使得网络可通过链式法则传递高频梯度信号，
-避免频谱能量衰减。而权重矩阵 $W_i$ 与频率因子 $\omega_0$ 共同调节输入信号的频域分布，
-使网络自适应平衡低频轮廓与高频细节的建模（如图\ref{fig:siren_compare}所示）。
+其中，$\omega_0$ 是可学习的频率缩放因子，决定了正弦函数的振荡速率。与ReLU等常见激活函数不同，
+正弦函数的周期性特性能够让网络更自然地表示高频信息。同时，正弦函数的导数始终非零，
+使得梯度在网络层间传播时不易衰减，有助于学习复杂的细节信息。
+
+此外，权重矩阵$W_i$与频率因子$\omega_0$共同影响输入信号的频域分布，
+使网络能够自适应地平衡低频轮廓和高频细节的建模能力（如图\ref{fig:siren_compare} 所示）。
 
 \begin{figure}[htb]
   \centering
-  % 这里可以控制图片宽度比例
   \includegraphics[width=0.6\linewidth]{Siren.png}
   \caption{激活函数对比\cite{sitzmann2020implicit}}
   \label{fig:siren_compare}
 \end{figure}
 
-实验\cite{sitzmann2020implicit}表明，采用正弦激活的MLP在3D形状重建任务中可将PSNR提升3-5 dB，
-收敛速度加快5倍。这一突破性进展验证了激活函数频谱特性对隐式神经表示质量的决定性作用，
-也为物理场仿真、微分方程求解等需高阶导数连续性的任务提供了新范式。
+实验\cite{sitzmann2020implicit}表明，采用正弦激活的MLP在3D形状重建任务中可将PSNR提升3-5 dB。
+这一突破性进展验证了激活函数的频谱特性对于隐式神经表示质量的关键作用，同时为物理场仿真、
+偏微分方程求解等需要高阶导数连续性的任务提供了新的解决方案。
 
 \subsection{损失函数}
-【】【】这里还没写。
+【】马上写。
 
 \subsection{自动编码器} \label{sec:auto_encoder}
 自动编码器（Autoencoder）作为深度学习中重要的无监督学习架构，其核心思想源于对生物感知系统中信息压缩与重建机制的仿生模拟。
