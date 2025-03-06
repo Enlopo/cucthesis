@@ -2,33 +2,30 @@
 
 \chapter{绪论}
 \section{研究背景及意义}
-渲染是根据场景信息和着色模型生成二维图像的过程，
-是计算机图形学的核心问题和最终目标。
-渲染不仅应用于电影特效、游戏虚拟环境、产品展示、科学可视化等文娱领域，
-还在教育、医学、军事等多个行业中发挥着关键作用。
-为实现高质量渲染，
-场景通常以数字资产的形式存在，
-这些资产包含几何形状、反射属性、光照环境等多维信息。
-不同的渲染技术则对资产的内容和格式提出了不同要求，二者紧密耦合。
-这种耦合使得资产一旦制作完成，
-资产便与渲染技术形成了绑定，
-使得资产在渲染技术迭代或变化时难以兼容，
-增加了项目开发的成本和风险。
-如图~\ref{fig:asset_rendering}中所示的皇冠即为数字资产，
-当数字资产与渲染技术不匹配时，
-会产生预期之外的错误结果。
+渲染（Rendering）是根据场景信息和着色模型生成二维图像的过程，是计算机图形学的核心问题和最终目标。
+渲染不仅应用于电影特效、游戏虚拟环境、产品展示、科学可视化等文娱领域，还在教育、医学、军事等多个行业中发挥着关键作用。
+为实现高质量渲染，场景通常以数字模型资产（Digital Model Asset）的形式存在，这些资产包含网格模型以及纹理贴图，
+用以表示几何形状、反射属性等多种信息。不同的渲染技术则对资产的内容和格式提出了不同要求，二者紧密耦合。
+这种耦合使得资产一旦制作完成，资产便与渲染技术形成了绑定，使得资产在渲染技术迭代或变化时难以兼容，
+增加了项目开发的成本和风险。如图~\ref{fig:asset_rendering}中所示的皇冠即为数字资产，
+当数字资产与渲染技术不匹配时，会产生预期之外的错误结果。
 \begin{figure}[H]
   \centering
-  % 这里可以控制图片宽度比例
   \begin{subfigure}[t]{0.45\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{asset_error/right_crown.png}
-    \caption{数字资产皇冠的渲染结果}
+    \includegraphics[height=3.5cm]{asset_error/digital_asset.png}
+    \caption{数字资产皇冠}
   \end{subfigure}
-  \begin{subfigure}[t]{0.45\textwidth}
+  \hspace{3mm}
+  \begin{subfigure}[t]{0.225\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{asset_error/wrong_crown.png}
-    \caption{渲染技术不匹配时的错误结果}
+    \includegraphics[height=3.5cm]{asset_error/correct.png}
+    \caption{渲染结果}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.225\textwidth}
+    \centering
+    \includegraphics[height=3.5cm]{asset_error/error.png}
+    \caption{渲染错误}
   \end{subfigure}
   \caption{数字资产及渲染}
   \label{fig:asset_rendering}
