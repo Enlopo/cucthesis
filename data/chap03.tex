@@ -102,10 +102,10 @@ SDF作为一种精细但计算效率较低的表示方式，视为“高模”�
 
 当模型尝试恢复几何形状时，法线纹理的引入会增加形状的不确定性。比如，某个突起的几何结构既可能是来自于法线纹理，
 也可能来自于网格体。如果模型依赖于法线纹理进行重建，可能会导致“低模”形状无法得到有效还原，折损后续重建效果。
-因此，本文选择使用损失函数限制法线纹理的变化，使网格体在初始化阶段保持法线纹理相对平滑，
-尽可能地通过网格体形状表示场景细节。该损失函数可以由以下公式表示：
-本文将平滑正则项应用于法线纹理，以惩罚网络过早地将几何细节表示为法线纹理的行为。该正则项$\mathcal{L}_{\text{nrm}}$
-可以被表示为：
+因此，本文选择使用正则项限制法线纹理的变化，使网格体在初始化阶段保持法线纹理相对平滑，
+以惩罚网络过早地将几何细节表示为法线纹理的行为，尽可能地通过网格体形状表示场景细节。
+该正则项$\mathcal{L}_{\text{nrm}}$与Zhang等人\cite{zhang2021nerfactor}使用的颜色平滑正则项类似，
+可以由以下公式表示：
 \begin{equation}
   \label{eq:nrm_smooth}
   \mathcal{L}_{\text{nrm}} = \sum_{\mathbf{x_\text{surf}}} {\lvert {n({\mathbf{x_\text{surf}}})} - {n({\mathbf{x_\text{surf}}}+\epsilon)}\rvert}
@@ -184,8 +184,8 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
   \label{fig:mlp_texture_cn}
 \end{figure}
 
-由于该MLP表示的是体积纹理，因此还需要额外的采样步骤。本文首先使用xatlas生成网格体的uv坐标，随后在空间中进行采样。
-在纹理导出之前，本文额外使用边缘填充算法解决了纹理的接缝问题。边缘填充算法的计算过程为算法\ref{alg:fillholes}所示：
+由于该MLP表示的是三维体积纹理，因此在导出时，本文使用xatlas\cite{yang_2021}生成网格体的逐顶点纹理坐标，随后在空间中采样，
+生成二维纹理。在纹理导出之前，本文额外使用边缘填充算法解决了纹理的接缝问题。边缘填充算法的计算过程为算法\ref{alg:fillholes}所示：
 
 \renewcommand{\algorithmicrequire}{\textbf{输入：}\unskip}
 \renewcommand{\algorithmicensure}{\textbf{输出：}\unskip}
@@ -225,7 +225,12 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
   \end{algorithmic}
   \end{algorithm}
 
-最周，本文参照NeRFactor\cite{zhang2021nerfactor}，使用与\ref{eq:nrm_smooth}相似的损失函数，对不同的纹理进行平滑。
+最后，本文参照Zhang等人\cite{zhang2021nerfactor}的方法，使用与\ref{eq:nrm_smooth}相似的平滑正则项$\mathcal{L}_\text{tex}$，对纹理施加平滑：
+\begin{equation}
+  \label{eq:tex_smooth}
+  \mathcal{L}_{\text{tex}} = \sum_{\mathbf{x_\text{surf}}} {\lvert {n({\mathbf{x_\text{surf}}})} - {n({\mathbf{x_\text{surf}}}+\epsilon)}\rvert}
+\end{equation}
+
 
 \subsection{光照表示}
 本文使用第2章中介绍的IBL技术作为光照表示技术。根据\eqref{eq:rendering_equation}中的渲染方程，物体表面的出射光照
@@ -253,17 +258,21 @@ NeRF合成数据集是一个广泛使用的基准数据集，具有丰富的合�
 本文选择的可视化场景及理由如下：
 
 \fourthtitle{1} Lego：
+
 该场景包含一台由多种不同形态和颜色的积木组成的挖掘机，具有复杂的几何结构和显著的表面光泽，
 可以充分验证本文管线对高频几何细节的还原能力。
 
 \fourthtitle{2} Hotdog：
-这个场景包含圆润的食物和餐具，同时具有多样的高光反射特性，对本文管线分解光泽表面的能力提出了挑战。
+
+该场景由圆润的食物和餐具组成，同时具有多样的高光反射特性，能够反映本文管线分解光滑表面的能力。
 
 \fourthtitle{3} Materials：
+
 该场景呈现了多种不同的材料，如镜面金属、磨砂金属等，每种材料具有不同的光反射属性，
 能够满足验证管线识别金属或高光区域并分解的能力。
 
 \fourthtitle{4} Mic：
+
 该场景包括了一些微小的物体和细节，如精细结构的物体表面，并且主体材质多为磨砂金属，
 可以用来验证管线在高精度要求下的适用性。
 
@@ -297,49 +306,53 @@ NeRF合成数据集是一个广泛使用的基准数据集，具有丰富的合�
 \end{figure}
 
 \subsection{多种工作流分解效果实验}
-本节展示了本文提出的NeRF光照分解管线在处理任意工作流资产时的解耦效果。
+本节展示了NeRF光照分解管线在处理任意工作流资产时的解耦效果。
 在2.2.3中，我们详细介绍了3种不同的工作流，分别是Metallic工作流、Specular工作流
 以及Blinn-Phong工作流。这些工作流至今仍在传统渲染引擎中得到广泛应用，
 本节实验将基于这三种工作流进行分解，并展示其中4个具有代表性的不同场景可视化展示，
 以定性证明本文管线能够对多种工作流进行分解。随后，本文对数据集中的全部场景进行定量比较，
 分析了不同工作流对分解效果的影响。
 
+\newpage
+
+Metallic工作流分解的实验结果如图\ref{fig:metallic_show}所示，在Metallic工作流下，
+管线将输出用于网格体和法线纹理作为几何表示，以及Albedo、Metallic和Roughness三张纹理描述表面反射属性。
+在Mic和Materials场景中，丰富的金属物体使得分解结果的特性尤为显著：Metallic纹理准确标识了金属表面区域，
+充分展示了金属材料的高反射性和光泽，证明了该方法在复杂金属表面分解中的适用性。
+
 \begin{figure}[htbp]
   \centering
   \renewcommand{\arraystretch}{1} % 调整表格行距
-  \setlength{\tabcolsep}{3pt} % 调整列间距
+  \setlength{\tabcolsep}{5pt} % 调整列间距
 
-  \begin{tabular}{c c c c c} 
-      & Lego & Hotdog & Materials & Mic\\
+  \begin{tabular}{c c c c} 
+      & Albedo & Metallic & Roughness \\
 
-      \raisebox{2.5\height}{\rotatebox[origin=c]{90}{Albedo}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/lego/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/hotdog/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/materials/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/mic/kd.png}} \\
+      \raisebox{3.3\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Lego/kd.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Lego/m.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Lego/r.png}} \\
 
-      \raisebox{2\height}{\rotatebox[origin=c]{90}{Metallic}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/lego/m.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/hotdog/m.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/materials/m.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/mic/m.png}} \\
+      \raisebox{2.6\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Hotdog/kd.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Hotdog/m.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Hotdog/r.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Roughness}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/lego/r.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/hotdog/r.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/materials/r.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/metallic_show/mic/r.png}} \\
+      \raisebox{2\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Materials/kd.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Materials/m.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Materials/r.png}} \\
+
+      \raisebox{4.5\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Mic/kd.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/mic/m.png}} &
+      \subfloat{\includegraphics[width=0.25\textwidth]{ch3/metallic_show/Mic/r.png}} \\
 
   \end{tabular}
 
   \caption{Metallic工作流分解效果}
   \label{fig:metallic_show}
 \end{figure}
-
-Metallic工作流分解的实验结果如图\ref{fig:metallic_show}所示，在Metallic工作流下，
-管线将输出生成Albedo、Metallic和Roughness三张纹理。在Mic和Materials场景中，
-丰富的金属物体使得分解结果的特性尤为显著：Metallic纹理准确标识了金属表面区域，
-充分展示了金属材料的高反射性和光泽，证明了该方法在复杂金属表面分解中的适用性。
 
 \clearpage
 
@@ -350,30 +363,32 @@ Specular和Glossiness三张纹理。在Hotdog场景中，光滑的盘子和粗�
 \begin{figure}[htbp]
   \centering
   \renewcommand{\arraystretch}{1} % 调整表格行距
-  \setlength{\tabcolsep}{3pt} % 调整列间距
+  \setlength{\tabcolsep}{5pt} % 调整列间距
 
-  \begin{tabular}{c c c c c} 
-      & Lego & Hotdog & Materials & Mic\\
+  \begin{tabular}{c c c c} 
+    & Diffuse & Specular & Glossiness \\
 
-      \raisebox{2.5\height}{\rotatebox[origin=c]{90}{Diffuse}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/diff.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/diff.png}} \\
+    \raisebox{3.3\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Lego/diff.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Lego/spec.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Lego/gloss.png}} \\
 
-      \raisebox{2\height}{\rotatebox[origin=c]{90}{Specular}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/spec.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/spec.png}} \\
+    \raisebox{2.6\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Hotdog/diff.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Hotdog/spec.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Hotdog/gloss.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Glossiness}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/lego/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/hotdog/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/materials/gloss.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/specular_show/mic/gloss.png}} \\
+    \raisebox{2\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Materials/diff.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Materials/spec.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Materials/gloss.png}} \\
 
-  \end{tabular}
+    \raisebox{4.5\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Mic/diff.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/mic/spec.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/specular_show/Mic/gloss.png}} \\
+
+    \end{tabular}
 
   \caption{Specular工作流分解效果}
   \label{fig:specular_show}
@@ -390,28 +405,30 @@ Blinn-Phong工作流漫反射颜色分解的效果显著低于其它两个工作
   \renewcommand{\arraystretch}{1} % 调整表格行距
   \setlength{\tabcolsep}{3pt} % 调整列间距
 
-  \begin{tabular}{c c c c c} 
-      & Lego & Hotdog & Materials & Mic\\
+  \begin{tabular}{c c c c} 
+    & Color & Specular Roll Off & Eccentricity \\
 
-      \raisebox{2.7\height}{\rotatebox[origin=c]{90}{Color}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/lego/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/hotdog/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/materials/kd.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/mic/kd.png}} \\
+    \raisebox{3.3\height}{\rotatebox[origin=c]{90}{Lego}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/lego/kd.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Lego/spec_roll.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Lego/ecc.png}} \\
 
-      \raisebox{0.5\height}{\rotatebox[origin=c]{90}{Specular Roll Off}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/lego/spec_roll.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/hotdog/spec_roll.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/materials/spec_roll.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/mic/spec_roll.png}} \\
+    \raisebox{2.6\height}{\rotatebox[origin=c]{90}{Hotdog}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Hotdog/kd.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Hotdog/spec_roll.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Hotdog/ecc.png}} \\
 
-      \raisebox{1.5\height}{\rotatebox[origin=c]{90}{Eccentricity}} & % 关键修改
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/lego/ecc.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/hotdog/ecc.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/materials/ecc.png}} &
-      \subfloat{\includegraphics[width=0.22\textwidth]{ch3/blinn_show/mic/ecc.png}} \\
+    \raisebox{2\height}{\rotatebox[origin=c]{90}{Materials}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Materials/kd.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Materials/spec_roll.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Materials/ecc.png}} \\
 
-  \end{tabular}
+    \raisebox{4.5\height}{\rotatebox[origin=c]{90}{Mic}} & % 关键修改
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Mic/kd.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/mic/spec_roll.png}} &
+    \subfloat{\includegraphics[width=0.25\textwidth]{ch3/blinn_show/Mic/ecc.png}} \\
+
+    \end{tabular}
 
   \caption{Blinn-Phong工作流分解效果}
   \label{fig:blinn_show}
@@ -431,7 +448,7 @@ Blinn-Phong工作流漫反射颜色分解的效果显著低于其它两个工作
       \toprule
       & \multicolumn{3}{c}{Metallic} & \multicolumn{3}{c}{Specular} & \multicolumn{3}{c}{Blinn-Phong} \\
       \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+      & PSNR & LPIPS & SSIM& PSNR & LPIPS & SSIM & PSNR & LPIPS & SSIM \\
       \midrule
       Lego & 28.99 & 0.055 & 0.948 & 29.21 & 0.046 & 0.959 & 28.87 & 0.058 & 0.945 \\
       Hotdog & 33.13 & 0.047 & 0.973 & 35.78 & 0.041 & 0.979 & 31.36 & 0.065 & 0.963 \\
@@ -478,7 +495,7 @@ Materials场景展示了其在多材质条件下的适用性，通过准确识�
 其次，为了检验管线输出结果在下游编辑任务中的应用，本课题选择了Maya作为实验平台。
 Maya是一款可以对网格体进行精细编辑的软件，是主流的数字资产编辑工具，
 与Maya兼容可以证明本文管线输出在传统流程中的适用性。在本实验中，
-本文修改了管线的输出的网格体以及贴图纹理，实验结果如图\ref{}所示。
+本文修改了管线的输出的网格体以及贴图纹理，实验结果如图\ref{fig:rerender_setup}所示。
 
 \begin{figure}[htb]
   \centering
@@ -487,11 +504,37 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
   \label{fig:rerender_setup}
 \end{figure}
 
-通过这些实验，本文验证了所提出的光照分解管线在传统渲染引擎中的高效性和可应用性，为后续的实际应用提供了坚实的基础。
+\newpage
+
+通过定性的下游任务应用实验，本文验证了光照分解管线在传统渲染引擎中的可行性与适用性。
 
 \section{消融实验}
 
-本节针对不同损失函数进行了定量与定性的消融实验，以证明本文设计的损失函数的有效性，并以此展示其工作原理。图\ref{fig:geo_ablation}为定性的消融实验结果，并分别展示了完整的网格体模型、网格体线框模型、局部细节三种视角。
+本节针对不同正则化项进行了定量与定性的消融实验，以证明本文设计的损失函数的有效性，并以此展示其工作原理。
+图\ref{fig:l_tex_ablation}为定性的$\mathcal{L}_\text{tex}$消融实验结果，以Metallic工作流为例，
+展示了该正则化项对于纹理的影响。
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[c]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch3/albedo_ablation/lego/compare.png}
+    \caption{Lego Albedo输出结果}
+  \end{subfigure}
+  \hspace{2mm}
+  \begin{subfigure}[c]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{ch3/albedo_ablation/hotdog/compare.png}
+    \caption{Hotdog Albedo输出结果}
+  \end{subfigure}
+  \caption{平滑正则项消融实验结果}
+  \label{fig:l_tex_ablation}
+\end{figure}
+
+在不施加平滑正则项时，网络过度拟合了场景中的表面反射属性细节，造成了大量的高频伪影。同时，失去平滑正则项后，
+不同区域的面在采样纹理时出现了缝隙，这可能是因为纹理边缘也被高度学习而导致。
+
+图\ref{fig:geo_ablation}为定性的消融实验结果，分别展示了完整的网格体模型、网格体线框模型、局部细节三种视角。
 
 \begin{figure}[htbp]
   \centering
@@ -510,7 +553,7 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/everything.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_lap.png}} \\
-      Ours & Ours w/o $\mathcal{L}_{\rm{normal}}$ & Ours w/o $\mathcal{L}_{\rm{laplacian}}$ \\
+      Ours & Ours w/o $\mathcal{L}_{\rm{lap}}$ & Ours w/o $\mathcal{L}_{\rm{nrm}}$ \\
 
   \end{tabular}
 
@@ -518,9 +561,18 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
   \label{fig:geo_ablation}
 \end{figure}
 
-从线框视角能够清晰地看出，在不添加拉普拉斯平滑正则项时，可能会出现多个顶点过度聚集，以通过不正常的尖锐三角面表达高频细节。在传统渲染器中，这种结构会使得渲染结果出现不正常的突起和高光。本文认为，由于可微渲染中的渲染方式不同于传统光栅化，这样的几何结构反而不会出现视觉瑕疵，因此管线倾向于制造过于聚集的顶点分布。在添加了拉普拉斯正则项后，顶点被有效地分散开来，在总顶点数近似的情况下，能够重建更好的表面细节，同时在渲染时也避免了明显的异常瑕疵。
+从线框视角能够清晰地看出，在不添加拉普拉斯平滑正则项时，可能会出现多个顶点过度聚集，
+部分三角面过度收缩，无法用来表达正常的几何形状。在传统渲染器渲染的网格体视角中，这种结构会使得渲染结果出现不正常的突起和高光。
+本文认为，由于可微渲染中的渲染方式不同于传统光栅化，这样的几何结构不会出现视觉瑕疵，因此这种结构不会被普通的均方差损失惩罚，
+导致管线倾向于制造过度聚集的顶点分布。
+在添加了拉普拉斯正则项后，顶点被有效地分散开来，在总顶点数相近的情况下，能够重建更好的表面细节，
+同时在传统渲染器中也避免了明显的异常瑕疵。
 
-表\ref{tab:loss_ablation}展示了定性的实验结果。其中，加入了拉普拉斯正则化项及法线平滑正则化项的实验结果在不同指标上均有提升，也同样证明了本文方法的有效性。
+其次，移除了法线平滑正则项的实验结果显示，部分高频细节难以得到有效的还原，并且在履带等精细部位出现了破面。在加入法线正则化项后，
+管线能够先建立初步的履带形状，随后再通过法线添加纹理，以更有效地恢复网格体。
+
+表\ref{tab:loss_ablation}展示了定量的实验结果。其中，加粗的结果为最佳指标。通过损失函数的定量消融实验，
+也同样证明了本文设计的几种损失函数的有效性。
 
 \begin{table}[htbp]
   \centering
@@ -532,28 +584,31 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
     \midrule
     $\mathcal{L}_{normal}$ & $\mathcal{L}_{laplacian}$ & $\mathcal{L}_{color}$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
     \midrule
-    \checkmark & & & 0.823 & 0.742 & 0.715 \\
-    & \checkmark & & 0.789 & 0.705 & 0.682 \\
-    & & \checkmark & 0.802 & 0.721 & 0.693 \\
-    & \checkmark & \checkmark & 0.835 & 0.763 & 0.732 \\
-    \checkmark & & \checkmark & 0.854 & 0.780 & 0.751 \\
-    \checkmark & \checkmark & & 0.846 & 0.771 & 0.739 \\
-    \checkmark & \checkmark & \checkmark & \textbf{0.878} & \textbf{0.805} & \textbf{0.778} \\
+    \checkmark & & & 26.49 & 0.187 & 0.805 \\
+    & \checkmark & & 25.98 & 0.141 & 0.852 \\
+    & & \checkmark & 26.37 & 0.123 & 0.871 \\
+    & \checkmark & \checkmark & 26.06 & 0.071 & 0.922 \\
+    \checkmark & & \checkmark & 25.88 & 0.072 & 0.919 \\
+    \checkmark & \checkmark & & 23.48 & 0.103 & 0.905 \\
+    \checkmark & \checkmark & \checkmark & \textbf{27.92} & \textbf{0.076} & \textbf{0.926} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-% \begin{table}[h]
-%   \centering
-%   \caption{不同损失函数的定量消融实验结果}
-%   \begin{tabular}{l ccc}
-%       \toprule
-%       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
-%       \midrule
-%       Ours & 28.99 & 0.055 & 0.948 \\
-%       Ours w/o $\mathcal{L}_{normal}$ & 28.38 & 0.063 & 0.941 \\
-%       Ours w/o $\mathcal{L}_{laplacian}$ & 27.25 & 0.057 & 0.939 \\
-%       \bottomrule
-%   \end{tabular}
-%   \label{tab:loss_ablation}
-% \end{table}
+\section{本章小结}
+
+本文首先针对数字资产解耦的目标进行了全面的分析，通过工业应用中现行的“工作流”概念，明确了将任意数字资产转化为指定工作流的目标。
+该目标不仅能够解耦数字模型资产与渲染技术，同时能使得本文的工作与现有的工业应用相互兼容。
+
+随后，本文通过分析任务的输入和输出，选择了NeRF光照分解研究作为实现技术。该领域的研究能够满足本文所需的输入条件，
+但是输出并不适用，因此本文进一步细化了现有研究的不足与限制，并在后文中着手解决。
+
+对于现有研究无法将管线输出用于传统渲染器的不足，本文采用了DMTet作为几何表示方法，使得管线能够输出适用性更广泛的网格体。
+本文还根据DMTet的特性设计了“法线+网格体”的几何表示组合，并根据初期实验结果和相关研究引入了不同的正则项，以进一步提高分解效果。
+
+对于本文使用任意工作流进行分解的需求，本文引入了MLP纹理作为反射属性的表示方法，能够动态灵活地划分输出的纹理，应对多种不同工作流。
+结合IBL光照表示技术，本文实现了数字资产解耦管线，并通过多项定量定性实验进行了验证。
+
+在实验中，本文证明了该管线对于任意工作流的光照分解能力，并且展示了管线输出在传统渲染器和资产编辑软件中的适用性。随后，
+消融实验展示了不同正则化项的作用和工作原理。通过对管线的设计及实验验证，本章完成了对数字资产进行解耦的目标，
+为工业界渲染技术难以迭代的问题提供了新的解决方向。
