@@ -52,7 +52,7 @@ NeRF光照分解管线所需的输入为场景的二维RGB图片，而待转换�
 因此，本文采用了混合的几何表示方法DMTet\cite{shen2021deep}，
 其结合了SDF与网格体表示的优点，同时能够与传统渲染器无缝衔接。
 
-根据本文在第二章的介绍，DMTet能够先通过SDF学习几何形状，随后以可微的方式转换为三角面网格体。
+根据\ref{sec:geo_representation}的介绍，DMTet能够先通过SDF学习几何形状，随后以可微的方式转换为三角面网格体。
 为了更高效地利用这种混合形状表示，本文进一步拓展了DMTet，引入了即时渲染中法线纹理这一技术，
 在优化过程中依次使用SDF、网格体、法线纹理进行优化，接下来本文将详细介绍设计思路及实现方式。
 
@@ -61,17 +61,104 @@ NeRF光照分解管线所需的输入为场景的二维RGB图片，而待转换�
 其决定着顶点的连接和排布方式，理想的拓扑结构可以将顶点和边分配在形状发生突变的位置，
 以实现相同的几何形状的同时使用尽可能少的顶点。所以，传统的数字资产在制作时通常会先完成一个较为精细的“高模”，
 然后制作一个多边形数量较低的“低模”。在这一过程中，艺术家根据经验设置网格的拓扑结构，最后通过烘焙（Baking）
-将“高模”中的细节以法线纹理的形式转移至“低模”中。同时，直接对网格体和法线纹理进行优化可能使得几何恢复任务变得更加困难，尤其是当凸起或凹陷既可能被网格表示，也可能被法线纹理表示时。因此，本文仅在优化的第三阶段中对法线纹理进行优化，而在前两个阶段不进行法线纹理优化。此策略能有效避免同时优化网格和法线纹理时可能出现的优化冲突问题。
-
-基于以上这一流程，我们提出可以通过引入一个类似的逆向过程来提升几何估计的准确度，
-从而改善3D重建的质量。本文设计的管线中将依次对SDF、网格体、法线纹理进行优化。首先，
+将“高模”中的细节以法线纹理的形式转移至“低模”中，如图\ref{fig:baking_normal}所示。
+\begin{figure}[H]
+  \centering
+  % 这里可以控制图片宽度比例
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[height=4cm]{ch3/normal_baking/ori.png}
+    \caption{高模}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[height=4cm]{ch3/normal_baking/low_poly.png}
+    \caption{低模}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[height=4cm]{ch3/normal_baking/normal.png}
+    \caption{法线纹理}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.24\textwidth}
+    \centering
+    \includegraphics[height=4cm]{ch3/normal_baking/mapped.png}
+    \caption{使用法线纹理}
+  \end{subfigure}
+  \caption{烘焙过程示意}
+  \label{fig:baking_normal}
+\end{figure}
+基于以上这一流程，本文引入了类似烘焙的过程来提升几何估计的准确度，从而改善3D几何形状重建的质量。
+本文设计的管线中将依次对SDF、网格体、法线纹理进行优化。首先，
 SDF作为一种精细但计算效率较低的表示方式，视为“高模”，该阶段的优化目标是，发挥SDF在高频细节表示上的优势，
 尽可能还原场景中的所有细节，以确保下一阶段中使用的网格具有足够的几何细节和拓扑结构。
 随后，网格体的拓扑结构在经过初步的优化后将被固定，这一阶段的几何表示视为“低模”，
 该优化阶段不断调整网格的顶点位置，使其精确包裹住场景的真实形状。最后，在网格体的形状确定后，
 法线纹理的优化将用于表达细微的几何细节，以将场景的高频细节传递至最终网格模型中。
 
-在具体实现中，由于SDF转换为网格体时不可避免地产生翻转或浮动的三角形面，因此本文采用了Liao等人\cite{Liao_2018}
+按照上文的设计及前期实验结果，本文针对性地设计了不同的正则项和权重，分阶段引导管线完成上述过程，具体的损失函数和策略如下：
+
+\fourthtitle{1}法线平滑正则项
+
+当模型尝试恢复几何形状时，法线纹理的引入会增加形状的不确定性。比如，某个突起的几何结构既可能是来自于法线纹理，
+也可能来自于网格体。如果模型依赖于法线纹理进行重建，可能会导致“低模”形状无法得到有效还原，折损后续重建效果。
+因此，本文选择使用损失函数限制法线纹理的变化，使网格体在初始化阶段保持法线纹理相对平滑，
+尽可能地通过网格体形状表示场景细节。该损失函数可以由以下公式表示：
+本文将平滑正则项应用于法线纹理，以惩罚网络过早地将几何细节表示为法线纹理的行为。该正则项$\mathcal{L}_{\text{nrm}}$
+可以被表示为：
+\begin{equation}
+  \label{eq:nrm_smooth}
+  \mathcal{L}_{\text{nrm}} = \sum_{\mathbf{x_\text{surf}}} {\lvert {n({\mathbf{x_\text{surf}}})} - {n({\mathbf{x_\text{surf}}}+\epsilon)}\rvert}
+\end{equation}
+其中，$\mathbf{x_\text{surf}}$为表面着色点的位置，$\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法线纹理
+不同区域的变化程度，并强制网络使用更为平滑的纹理。该损失项的权重随训练步数而逐渐降低，允许网络在网格体细节初步建立之后，
+再使用法线纹理加入更多细节。
+
+\fourthtitle{2}拉普拉斯正则项
+
+在初期的实验结果中，DMTet生成的网格体通常会将多个顶点挤压在一起，以形成尖锐结构或小块平坦表面。
+在可微渲染管线中，这种重叠顶点不会产生严重的渲染错误，但在传统渲染器中会导致渲染出伪影。在总体形状的表达上，
+重叠顶点也会导致大量的顶点和面被浪费，折损几何重建效果。因此，本文利用均匀拉普拉斯矩阵（Uniform Laplacian）
+计算正则项，引导网络将顶点分散开。均匀拉普拉斯矩阵$\symbfit{L}$基于顶点邻接关系计算：
+\begin{equation}
+  \symbfit{L}_{ij} =
+  \begin{cases}
+  -1, & \text{if } i \text{ and } j \text{ are adjacent} \\
+  d_i, & \text{if } i = j \\
+  0, & \text{otherwise}
+  \end{cases}
+  \label{eq:uniform_lap}
+\end{equation}
+其中，$d_i$代表顶点的度数，即它的邻接顶点个数。拉普拉斯正则项$\mathcal{L}_\text{lap}$计算方式如算法\ref{alg:lapreg}所示：
+\renewcommand{\algorithmicrequire}{\textbf{输入：}\unskip}
+\renewcommand{\algorithmicensure}{\textbf{输出：}\unskip}
+\begin{algorithm}
+  \caption{拉普拉斯正则化损失计算}
+  \begin{algorithmic}[1]
+  \REQUIRE 顶点坐标矩阵$\mathbf{V} \in \mathbb{R}^{V \times D}$, 三角面矩阵$\mathbf{F} \in \mathbb{N}^{F \times 3}$
+  \ENSURE 拉普拉斯正则项 $\mathcal{L}_{\text{lap}}$
+  \STATE Initialize sparse matrix $L \in \mathbb{R}^{V \times V}$ with zeros
+  \FOR{each face $f = (i, j, k) \in \mathbf{F}$}
+      \STATE Add edges $(i, j), (j, k), (k, i)$ to adjacency list
+  \ENDFOR
+  \FOR{each edge $(i, j)$ in adjacency list}
+      \STATE $L_{ij} \gets -1$, $L_{ji} \gets -1$
+  \ENDFOR
+  \FOR{each vertex $i$}
+      \STATE $L_{ii} \gets -\sum_{j \neq i} L_{ij}$
+  \ENDFOR
+
+  \STATE Compute $\delta \gets L \mathbf{V}$
+  \STATE Compute $\|\delta_i\| = \sqrt{\sum_{d} \delta_{i,d}^2}$ for each vertex $i$
+  \STATE Compute $\mathcal{L}_{\text{lap}} \gets \frac{1}{V} \sum_{i=1}^{V} \|\delta_i\|$
+  \STATE \RETURN $\mathcal{L}_{\text{lap}}$
+  \end{algorithmic}
+  \label{alg:lapreg}
+\end{algorithm}
+
+\fourthtitle{3}SDF翻转正则项
+
+由于SDF转换为网格体时不可避免地产生翻转或浮动的三角形面，因此本文采用了Liao等人\cite{Liao_2018}
 提出的方法对DMTet的SDF值进行正则化。给定二元交叉熵损失函数$H$、Sigmoid函数$\sigma$和
 符号函数$\mathrm{sign}(s_i)$，在满足$\mathrm{sign}(s_i)\neq\mathrm{sign}(s_j)$的条件下，
 正则化项可以通过以下公式定义：
@@ -80,17 +167,6 @@ L_{reg}=\sum_{i,j\in\mathbb{S}_e}\Bigl[H\bigl(\sigma(s_i),\mathrm{sign}(s_j)\big
 \end{equation}
 其中，$\mathbb{S}_e$表示四面体网格中边的集合，且条件为$\mathrm{sign}(s_i)\neq\mathrm{sign}(s_j)$。
 该正则化项的直观解释是减少符号翻转的次数，从而简化表面，避免不必要的浮动几何体或内部几何结构。
-
-随后，在对法线纹理优化的阶段中，本文没有强行固定网格体形状，但是为了避免上文所说的优化冲突问题，
-本文选择使用损失函数限制法线纹理的变化，使网格体在初始化阶段保持法线纹理相对平滑，
-尽可能地通过网格体形状表示场景细节。该损失函数可以由以下公式表示：
-
-最后，本文观察到DMTet生成的网格体通常会将多个顶点挤压在一起，在局部细节上，
-这有助于生成小块的平坦表面，但是在总体形状的表达上，这会导致大量的顶点和面被浪费，
-无法有效表示形状。因此，本文使用如下损失函数，强制顶点之间分散开：
-
-在后文的实验中，本文将通过定性的实验，验证该方法对于下游任务的适用性，
-并通过定量的消融实验，解释并证明以上损失函数的工作原理及有效性。
 
 \subsection{MLP纹理} \label{sec:mlp_texture}
 由于本文旨在使用任意工作流所对应的标准进行NeRF光照分解，因此有必要设计一种足够灵活、
@@ -103,7 +179,7 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
 \begin{figure}[htb]
   \centering
   % 这里可以控制图片宽度比例
-  \includegraphics[width=0.8\linewidth]{MLP_texture_cn.png}
+  \includegraphics[width=1.0\linewidth]{MLP_texture_cn.png}
   \caption{纹理表示方式}
   \label{fig:mlp_texture_cn}
 \end{figure}
@@ -149,7 +225,7 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
   \end{algorithmic}
   \end{algorithm}
 
-同时，本文参照NeRFactor\cite{zhang2021nerfactor}，利用损失函数对纹理的各个通道施加平滑。损失函数如下所示：
+最周，本文参照NeRFactor\cite{zhang2021nerfactor}，使用与\ref{eq:nrm_smooth}相似的损失函数，对不同的纹理进行平滑。
 
 \subsection{光照表示}
 本文使用第2章中介绍的IBL技术作为光照表示技术。根据\eqref{eq:rendering_equation}中的渲染方程，物体表面的出射光照
@@ -228,11 +304,6 @@ NeRF合成数据集是一个广泛使用的基准数据集，具有丰富的合�
 以定性证明本文管线能够对多种工作流进行分解。随后，本文对数据集中的全部场景进行定量比较，
 分析了不同工作流对分解效果的影响。
 
-Metallic工作流分解的实验结果如图\ref{fig:metallic_show}所示，在Metallic工作流下，
-管线将输出生成Albedo、Metallic和Roughness三张纹理。在Mic和Materials场景中，
-丰富的金属物体使得分解结果的特性尤为显著：Metallic纹理准确标识了金属表面区域，
-充分展示了金属材料的高反射性和光泽，证明了该方法在复杂金属表面分解中的适用性。
-
 \begin{figure}[htbp]
   \centering
   \renewcommand{\arraystretch}{1} % 调整表格行距
@@ -264,6 +335,13 @@ Metallic工作流分解的实验结果如图\ref{fig:metallic_show}所示，在M
   \caption{Metallic工作流分解效果}
   \label{fig:metallic_show}
 \end{figure}
+
+Metallic工作流分解的实验结果如图\ref{fig:metallic_show}所示，在Metallic工作流下，
+管线将输出生成Albedo、Metallic和Roughness三张纹理。在Mic和Materials场景中，
+丰富的金属物体使得分解结果的特性尤为显著：Metallic纹理准确标识了金属表面区域，
+充分展示了金属材料的高反射性和光泽，证明了该方法在复杂金属表面分解中的适用性。
+
+\clearpage
 
 Specular工作流分解的实验结果如图\ref{fig:specular_show}所示。在Specular工作流下，管线能够同时生成Diffuse、
 Specular和Glossiness三张纹理。在Hotdog场景中，光滑的盘子和粗糙的热狗被清晰地区分开来，
@@ -301,7 +379,7 @@ Specular和Glossiness三张纹理。在Hotdog场景中，光滑的盘子和粗�
   \label{fig:specular_show}
 \end{figure}
 
-
+\clearpage
 
 Blinn-Phong工作流分解的实验结果如图\ref{fig:blinn_show}所示。该工作流对应Color、Specular Roll Off和Eccentricity三张纹理。
 Color纹理能够控制漫反射的基础颜色，剩余两张纹理则控制高光的形状。由于着色模型的真实感较低，
@@ -338,6 +416,8 @@ Blinn-Phong工作流漫反射颜色分解的效果显著低于其它两个工作
   \caption{Blinn-Phong工作流分解效果}
   \label{fig:blinn_show}
 \end{figure}
+
+\clearpage
 
 表\ref{tab:rendering_comparison}展示了不同工作流解耦的对比指标，注意到部分场景在不同的工作流中出现了结果略微变化的现象，
 本文认为其原因为场景特性与工作流匹配程度不同。例如，对于Lego和Hotdog场景，金属物体较少，反光物体较多，
@@ -442,17 +522,38 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
 
 表\ref{tab:loss_ablation}展示了定性的实验结果。其中，加入了拉普拉斯正则化项及法线平滑正则化项的实验结果在不同指标上均有提升，也同样证明了本文方法的有效性。
 
-\begin{table}[h]
+\begin{table}[htbp]
   \centering
   \caption{不同损失函数的定量消融实验结果}
-  \begin{tabular}{l ccc}
-      \toprule
-      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
-      \midrule
-      Ours & 28.99 & 0.055 & 0.948 \\
-      Ours w/o $\mathcal{L}_{normal}$ & 28.38 & 0.063 & 0.941 \\
-      Ours w/o $\mathcal{L}_{laplacian}$ & 27.25 & 0.057 & 0.939 \\
-      \bottomrule
-  \end{tabular}
   \label{tab:loss_ablation}
+  \begin{tabular}{ccc|ccc}
+    \toprule
+    \multicolumn{3}{c|}{损失函数组合} & \multicolumn{3}{c}{评估指标} \\
+    \midrule
+    $\mathcal{L}_{normal}$ & $\mathcal{L}_{laplacian}$ & $\mathcal{L}_{color}$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+    \midrule
+    \checkmark & & & 0.823 & 0.742 & 0.715 \\
+    & \checkmark & & 0.789 & 0.705 & 0.682 \\
+    & & \checkmark & 0.802 & 0.721 & 0.693 \\
+    & \checkmark & \checkmark & 0.835 & 0.763 & 0.732 \\
+    \checkmark & & \checkmark & 0.854 & 0.780 & 0.751 \\
+    \checkmark & \checkmark & & 0.846 & 0.771 & 0.739 \\
+    \checkmark & \checkmark & \checkmark & \textbf{0.878} & \textbf{0.805} & \textbf{0.778} \\
+    \bottomrule
+  \end{tabular}
 \end{table}
+
+% \begin{table}[h]
+%   \centering
+%   \caption{不同损失函数的定量消融实验结果}
+%   \begin{tabular}{l ccc}
+%       \toprule
+%       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+%       \midrule
+%       Ours & 28.99 & 0.055 & 0.948 \\
+%       Ours w/o $\mathcal{L}_{normal}$ & 28.38 & 0.063 & 0.941 \\
+%       Ours w/o $\mathcal{L}_{laplacian}$ & 27.25 & 0.057 & 0.939 \\
+%       \bottomrule
+%   \end{tabular}
+%   \label{tab:loss_ablation}
+% \end{table}
