@@ -5,16 +5,7 @@
 在第1章中，本文介绍了数字资产与渲染技术的耦合问题，并分析了现有研究和技术无法解决该问题的原因。
 随后，本文通过第2章详细解释了深度学习，可微渲染，NeRF以及传统渲染管线的概念及原理。本章将讲解
 我们设计的数字资产解耦管线，该管线基于NeRF光照分解研究，结合混合的几何表示，实现了将数字资产与渲染技术解耦的目标。
-管线的输入输出，总体结构及应用场景如图\ref{fig:main_pipe_line}所示。
 接下来，本章将从问题分析、管线设计来介绍本文的工作，并且通过定量定性的实验，证明本文管线的可行性与适用性
-
-\begin{figure}[htb]
-  \centering
-  % 这里可以控制图片宽度比例
-  \includegraphics[width=1.0\linewidth]{Main_line_with_apply_with_big_zi.png}
-  \caption{数字资产解耦管线与应用场景}
-  \label{fig:main_pipe_line}
-\end{figure}
 
 \section{数字资产解耦问题分析}
 
@@ -22,7 +13,7 @@
 本文管线如果能够实现将任意工作流的数字资产转换到另一种任意工作流，即可将数字资产与任意的渲染技术相结合，
 实现本文解耦的目标。
 
-在技术路线上，本文选择了第二章中介绍的NeRF光照分解相关研究，在此基础上进行目标的实现。
+在技术路线上，本文选择了第2章中介绍的NeRF光照分解相关研究，在此基础上进行目标的实现。
 NeRF光照分解管线所需的输入为场景的二维RGB图片，而待转换的数字资产可以通过渲染获得这些图片；
 同时，该管线可以输出场景的几何形状和表面反射属性，与数字资产转换所需的输出类似。因此，
 选择该技术开展研究和实现，对于本文的目标具备可行性。
@@ -38,14 +29,20 @@ NeRF光照分解管线所需的输入为场景的二维RGB图片，而待转换�
 输出的几何表示为网格体，反射属性为指定工作流对应的纹理贴图。
 
 \section{管线设计}
-本节将系统地介绍本文管线的设计与创新方法。首先，本文改进了几何表示方式，
-通过一种显式隐式混合的方法，使得管线能够基于隐式表示进行优化的同时，
+本节将系统地介绍本文管线的设计与创新方法。管线的输入输出，总体结构及应用场景如图\ref{fig:main_pipe_line}所示。
+首先，本文改进了几何表示方式，通过一种显式隐式混合的方法，使得管线能够基于隐式表示进行优化的同时，
 也能够直接输出显式网格表示的场景几何信息。随后，本文采用MLP纹理表示场景的表面反射属性，
 这种设计带来了足够的灵活性，能够满足本文对任意工作流进行解耦的需求。
 结合环境光照贴图作为光照技术进行可微渲染。在可微渲染中，本文允许使用任意的工作流表示
 作为场景的反射属性的表示方法，使用渲染结果与原始输入计算损失，并将梯度传播到前述的几个阶段。
 最后，本文管线输出网格体与纹理贴图，完成数字资产解耦的目标。接下来，本节将分别介绍以上部分。
-
+\begin{figure}[htb]
+  \centering
+  % 这里可以控制图片宽度比例
+  \includegraphics[width=1.0\linewidth]{ch3/Main_line_with_apply_with_big_zi.png}
+  \caption{数字资产解耦管线与应用场景}
+  \label{fig:main_pipe_line}
+\end{figure}
 \subsection{几何表示方式}
 
 现有的隐式神经表示方法难以将生成结果直接用于下游编辑等任务，而传统的显式网格体则在重建效果上有所折损。
@@ -56,10 +53,10 @@ NeRF光照分解管线所需的输入为场景的二维RGB图片，而待转换�
 为了更高效地利用这种混合形状表示，本文进一步拓展了DMTet，引入了即时渲染中法线纹理这一技术，
 在优化过程中依次使用SDF、网格体、法线纹理进行优化，接下来本文将详细介绍设计思路及实现方式。
 
-在传统的渲染管线中，网格体在细节的精细程度取决于两个方面，首先是网格体的顶点数量，
+在传统的渲染管线中，网格体在细节的精细程度取决于两个方面：首先是网格体的顶点数量，
 对于细节较为丰富的区域，较高的顶点数量才能准确的还原精细结构；其次是网格体的拓扑结构，
-其决定着顶点的连接和排布方式，理想的拓扑结构可以将顶点和边分配在形状发生突变的位置，
-以实现相同的几何形状的同时使用尽可能少的顶点。所以，传统的数字资产在制作时通常会先完成一个较为精细的“高模”，
+其决定着顶点的连接和排布方式，理想的拓扑结构可以将顶点和边分配在形状发生变化的位置，
+在表示相同的几何形状时能够使用更少的顶点。所以，传统的数字资产在制作时通常会先完成一个较为精细的“高模”，
 然后制作一个多边形数量较低的“低模”。在这一过程中，艺术家根据经验设置网格的拓扑结构，最后通过烘焙（Baking）
 将“高模”中的细节以法线纹理的形式转移至“低模”中，如图\ref{fig:baking_normal}所示。
 \begin{figure}[H]
@@ -98,23 +95,24 @@ SDF作为一种精细但计算效率较低的表示方式，视为“高模”�
 
 按照上文的设计及前期实验结果，本文针对性地设计了不同的正则项和权重，分阶段引导管线完成上述过程，具体的损失函数和策略如下：
 
-\fourthtitle{1}法线平滑正则项
+\subsubsection*{（1）法线平滑正则项}
 
 当模型尝试恢复几何形状时，法线纹理的引入会增加形状的不确定性。比如，某个突起的几何结构既可能是来自于法线纹理，
 也可能来自于网格体。如果模型依赖于法线纹理进行重建，可能会导致“低模”形状无法得到有效还原，折损后续重建效果。
 因此，本文选择使用正则项限制法线纹理的变化，使网格体在初始化阶段保持法线纹理相对平滑，
 以惩罚网络过早地将几何细节表示为法线纹理的行为，尽可能地通过网格体形状表示场景细节。
-该正则项$\mathcal{L}_{\text{nrm}}$与Zhang等人\cite{zhang2021nerfactor}使用的颜色平滑正则项类似，
+该正则项$\mathcal{L}_{\text{normal}}$与Zhang等人\cite{zhang2021nerfactor}使用的颜色平滑正则项类似，
 可以由以下公式表示：
 \begin{equation}
   \label{eq:nrm_smooth}
-  \mathcal{L}_{\text{nrm}} = \sum_{\mathbf{x_\text{surf}}} {\lvert {n({\mathbf{x_\text{surf}}})} - {n({\mathbf{x_\text{surf}}}+\epsilon)}\rvert}
+  \mathcal{L}_{\text{normal}} = \sum_{\boldsymbol{x_\text{surf}}} {\lvert {T_{\text{normal}}({\boldsymbol{x_\text{surf}}})} - {T_{\text{normal}}({\boldsymbol{x_\text{surf}}}+\epsilon)}\rvert}
 \end{equation}
-其中，$\mathbf{x_\text{surf}}$为表面着色点的位置，$\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法线纹理
+其中，$T_{\text{normal}}(x)$代表采样$\boldsymbol{x}$点的法线纹理，$\boldsymbol{x_\text{surf}}$为表面着色点的位置，
+$\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法线纹理
 不同区域的变化程度，并强制网络使用更为平滑的纹理。该损失项的权重随训练步数而逐渐降低，允许网络在网格体细节初步建立之后，
 再使用法线纹理加入更多细节。
 
-\fourthtitle{2}拉普拉斯正则项
+\subsubsection*{（2）拉普拉斯正则项}
 
 在初期的实验结果中，DMTet生成的网格体通常会将多个顶点挤压在一起，以形成尖锐结构或小块平坦表面。
 在可微渲染管线中，这种重叠顶点不会产生严重的渲染错误，但在传统渲染器中会导致渲染出伪影。在总体形状的表达上，
@@ -123,40 +121,42 @@ SDF作为一种精细但计算效率较低的表示方式，视为“高模”�
 \begin{equation}
   \symbfit{L}_{ij} =
   \begin{cases}
-  -1, & \text{if } i \text{ and } j \text{ are adjacent} \\
-  d_i, & \text{if } i = j \\
+  -1, & j \in \mathcal{N}(i) \\
+  \left|\mathcal{N}(i)\right|, & i = j \\
   0, & \text{otherwise}
   \end{cases}
   \label{eq:uniform_lap}
 \end{equation}
-其中，$d_i$代表顶点的度数，即它的邻接顶点个数。拉普拉斯正则项$\mathcal{L}_\text{lap}$计算方式如算法\ref{alg:lapreg}所示：
+其中，$\mathcal{N}(i)$为顶点的邻接关系，$\left|\mathcal{N}(i)\right|$代表顶点$i$的度数，即它的邻接顶点个数。拉普拉斯正则项$\mathcal{L}_\text{lap}$计算方式如算法\ref{alg:lapreg}所示：
 \renewcommand{\algorithmicrequire}{\textbf{输入：}\unskip}
 \renewcommand{\algorithmicensure}{\textbf{输出：}\unskip}
+
 \begin{algorithm}
-  \caption{拉普拉斯正则化损失计算}
+  \caption{拉普拉斯正则项计算} % 标题统一动词结构
+  \label{alg:lapreg}
   \begin{algorithmic}[1]
-  \REQUIRE 顶点坐标矩阵$\mathbf{V} \in \mathbb{R}^{V \times D}$, 三角面矩阵$\mathbf{F} \in \mathbb{N}^{F \times 3}$
+  \REQUIRE 顶点坐标矩阵 $\bm{V} \in \mathbb{R}^{V \times D}$，三角面片矩阵 $\bm{F} \in \mathbb{N}^{F \times 3}$
   \ENSURE 拉普拉斯正则项 $\mathcal{L}_{\text{lap}}$
-  \STATE Initialize sparse matrix $L \in \mathbb{R}^{V \times V}$ with zeros
-  \FOR{each face $f = (i, j, k) \in \mathbf{F}$}
-      \STATE Add edges $(i, j), (j, k), (k, i)$ to adjacency list
+  
+  \STATE \textbf{初始化}稀疏矩阵 $L \in \mathbb{R}^{V \times V}$ 为零矩阵
+  \FOR{每个三角面片 $f = (i, j, k) \in \bm{F}$} % 中文描述循环主体
+      \STATE 将边 $(i, j)$，$(j, k)$，$(k, i)$ 加入邻接表
   \ENDFOR
-  \FOR{each edge $(i, j)$ in adjacency list}
-      \STATE $L_{ij} \gets -1$, $L_{ji} \gets -1$
+  \FOR{每条边 $(i, j) \in \text{邻接表}$} % 数学符号与中文混排
+      \STATE 设置 $L_{ij} \gets -1$，$L_{ji} \gets -1$
   \ENDFOR
-  \FOR{each vertex $i$}
-      \STATE $L_{ii} \gets -\sum_{j \neq i} L_{ij}$
+  \FOR{每个顶点 $i \in \{1,\dots,V\}$}
+      \STATE 计算对角元 $L_{ii} \gets -\sum_{j \neq i} L_{ij}$
   \ENDFOR
 
-  \STATE Compute $\delta \gets L \mathbf{V}$
-  \STATE Compute $\|\delta_i\| = \sqrt{\sum_{d} \delta_{i,d}^2}$ for each vertex $i$
-  \STATE Compute $\mathcal{L}_{\text{lap}} \gets \frac{1}{V} \sum_{i=1}^{V} \|\delta_i\|$
+  \STATE 计算顶点偏移量 $\bm{\delta} \gets L \bm{V}$
+  \STATE 计算各顶点范数 $\|\bm{\delta}_i\| = \sqrt{\sum_{d=1}^D \delta_{i,d}^2}$
+  \STATE 计算正则项 $\mathcal{L}_{\text{lap}} \gets \frac{1}{V} \sum_{i=1}^{V} \|\bm{\delta}_i\|$
   \STATE \RETURN $\mathcal{L}_{\text{lap}}$
   \end{algorithmic}
-  \label{alg:lapreg}
 \end{algorithm}
 
-\fourthtitle{3}SDF翻转正则项
+\subsubsection*{（3）SDF翻转正则项}
 
 由于SDF转换为网格体时不可避免地产生翻转或浮动的三角形面，因此本文采用了Liao等人\cite{Liao_2018}
 提出的方法对DMTet的SDF值进行正则化。给定二元交叉熵损失函数$H$、Sigmoid函数$\sigma$和
@@ -170,8 +170,9 @@ L_{reg}=\sum_{i,j\in\mathbb{S}_e}\Bigl[H\bigl(\sigma(s_i),\mathrm{sign}(s_j)\big
 
 \subsection{MLP纹理} \label{sec:mlp_texture}
 由于本文旨在使用任意工作流所对应的标准进行NeRF光照分解，因此有必要设计一种足够灵活、
-易于拓展的实现方式。本文使用MLP来估计表面反射属性，以类似于体积纹理的方式建立不同的属性，
-并按照通道重新划分输出用于后续的渲染步骤。
+易于拓展的实现方式。本文使用小型MLP来估计表面反射属性，使用空间位置坐标$\bm{x}$作为输入，
+通过哈希网格编码后，输出多个通道的纹理。这种实现方式类似于体积纹理，多张不同的纹理可以按照通道重新划分，
+并用于后续的渲染步骤。
 
 MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的三维坐标进行归一化处理，并利用tiny-cuda-nn框架\cite{Muller_tiny-cuda-nn_2021}
 中提供的哈希网格编码器对其进行多分辨率特征映射，将输入坐标映射到高维特征空间中，增强网络对细粒度纹理信息的捕捉能力。
@@ -179,57 +180,54 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
 \begin{figure}[htb]
   \centering
   % 这里可以控制图片宽度比例
-  \includegraphics[width=1.0\linewidth]{MLP_texture_cn.png}
+  \includegraphics[width=1.0\linewidth]{ch3/MLP_texture_cn.png}
   \caption{纹理表示方式}
   \label{fig:mlp_texture_cn}
 \end{figure}
 
 由于该MLP表示的是三维体积纹理，因此在导出时，本文使用xatlas\cite{yang_2021}生成网格体的逐顶点纹理坐标，随后在空间中采样，
-生成二维纹理。在纹理导出之前，本文额外使用边缘填充算法解决了纹理的接缝问题。边缘填充算法的计算过程为算法\ref{alg:fillholes}所示：
-
-\renewcommand{\algorithmicrequire}{\textbf{输入：}\unskip}
-\renewcommand{\algorithmicensure}{\textbf{输出：}\unskip}
+生成二维纹理。在纹理导出之前，本文额外使用边缘填充算法解决了纹理的接缝问题。边缘填充算法的计算过程为算法\ref{alg:fillholes}所示。
 
 \begin{algorithm}
-  \caption{填充空洞推拉算法}
+  \caption{空洞填充推拉算法} % 标题统一名词结构
   \label{alg:fillholes}
-  \small
   \begin{algorithmic}[1]
-  \REQUIRE 源图像 \texttt{src}
-  \ENSURE 目标图像 \texttt{dst}
+  \REQUIRE 源图像 $\bm{I}_{\text{src}}$
+  \ENSURE 目标图像 $\bm{I}_{\text{dst}}$
   
-  \STATE 初始化图像金字塔容器 \texttt{pyramid}
+  \STATE \textbf{初始化}图像金字塔容器 $\text{pyramid} = \emptyset$
+  \STATE 创建浮点图像 $\bm{I}_{\text{top}} \gets \text{copy}(\bm{I}_{\text{src}})$
+  \STATE 将 $\bm{I}_{\text{top}}$ 加入 $\text{pyramid}$
   
-  \STATE 创建与\texttt{src}同规格的浮点格式图像 \texttt{top}
-  \STATE 将\texttt{src}拷贝至\texttt{top}
-  \STATE 添加\texttt{top}到\texttt{pyramid}
-  
-  \WHILE{当前层宽或高 > 1}
-      \STATE 获取当前层图像\texttt{big}
-      \STATE $\texttt{w} \gets \max(1, \lfloor \texttt{w}/2 \rfloor)$，$\texttt{h} \gets \max(1, \lfloor \texttt{h}/2 \rfloor)$
-      \STATE 创建缩小尺寸的图像 \texttt{small}
-      \STATE 将\texttt{big}下采样到 \texttt{small}
-      \STATE 对\texttt{small}的非零 $\alpha$ 像素执行：$\texttt{RGB} \gets \texttt{RGB} / \alpha$
-      \STATE 添加\texttt{small}到\texttt{pyramid}
+  \WHILE{当前层宽度 $w > 1$ \OR 高度 $h > 1$} % 逻辑表达式用数学符号
+      \STATE 获取当前层图像 $\bm{I}_{\text{big}}$
+      \STATE 计算新尺寸 $w \gets \max(1, \lfloor w/2 \rfloor)$，$h \gets \max(1, \lfloor h/2 \rfloor)$
+      \STATE 创建缩小图像 $\bm{I}_{\text{small}}$ 并下采样
+      \STATE 对 $\alpha \neq 0$ 的像素执行 $\bm{I}_{\text{small}}^{\text{RGB}} \gets \bm{I}_{\text{small}}^{\text{RGB}} / \alpha$
+      \STATE 将 $\bm{I}_{\text{small}}$ 加入 $\text{pyramid}$
   \ENDWHILE
-  \STATE $i \gets |pyramid| - 2$
-  \WHILE{$i \textgreater 0$}
-      \STATE 获取当前层图像\texttt{big}
-      \STATE 创建\texttt{blowup}图像，规格与\texttt{big}相同
-      \STATE 将下一层图像上采样到\texttt{blowup}
-      \STATE 将\texttt{big}与\texttt{blowup}进行 $\alpha$ 合成：$\texttt{big} \gets \texttt{over}(\texttt{big}, \texttt{blowup})$
-      \STATE $i \gets i - 1$
+  
+  \STATE 设置层数 $i \gets |\text{pyramid}| - 2$
+  \WHILE{$i > 0$} % 统一循环条件写法
+      \STATE 获取当前层 $\bm{I}_{\text{big}} \gets \text{pyramid}[i]$
+      \STATE 创建放大图像 $\bm{I}_{\text{blowup}}$ 并上采样下一层图像
+      \STATE 图像合成 $\bm{I}_{\text{big}} \gets \text{over}(\bm{I}_{\text{big}}, \bm{I}_{\text{blowup}})$
+      \STATE 更新层数 $i \gets i - 1$
   \ENDWHILE
 
-  \RETURN pyramid[0]
+  \STATE \RETURN $\text{pyramid}[0]$
   \end{algorithmic}
-  \end{algorithm}
+\end{algorithm}
 
 最后，本文参照Zhang等人\cite{zhang2021nerfactor}的方法，使用与\ref{eq:nrm_smooth}相似的平滑正则项$\mathcal{L}_\text{tex}$，对纹理施加平滑：
 \begin{equation}
   \label{eq:tex_smooth}
-  \mathcal{L}_{\text{tex}} = \sum_{\mathbf{x_\text{surf}}} {\lvert {n({\mathbf{x_\text{surf}}})} - {n({\mathbf{x_\text{surf}}}+\epsilon)}\rvert}
+  \mathcal{L}_{\text{tex}} = \sum_{\boldsymbol{x_\text{surf}}} {\lvert {T({\boldsymbol{x_\text{surf}}})} - {T({\boldsymbol{x_\text{surf}}}+\epsilon)}\rvert}
 \end{equation}
+其中，$T(x)$代表$\boldsymbol{x}$点的纹理采样，$\boldsymbol{x_\text{surf}}$为表面着色点的位置，
+$\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法线纹理
+不同区域的变化程度，并强制网络使用更为平滑的纹理。该损失项的权重随训练步数而逐渐降低，允许网络在网格体细节初步建立之后，
+再使用法线纹理加入更多细节。
 
 
 \subsection{光照表示}
@@ -237,10 +235,10 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
 可以表示为：
 \begin{equation}
   \label{eq:radiance}
-  L\left(\omega_o\right)=\int_{\upOmega} L_i\left(\omega_i\right)f\left(\omega_i,\omega_o\right)\left(\omega_i\cdot\mathbf{n}\right)\mathrm{d}\omega_i,
+  L\left({\boldsymbol{\omega}}_o\right)=\int_{\upOmega} L_i\left({\boldsymbol{\omega}}_i\right)f\left({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)\left({\boldsymbol{\omega}}_i\cdot\boldsymbol{n}\right)\mathrm{d}{\boldsymbol{\omega}}_i,
 \end{equation}
-其中$L_i$表示来自方向$\omega_i$的入射辐射，$f\left(\omega_i,\omega_o\right)$为BRDF，积分域$\upOmega$为以
-表面法线$\mathbf{n}$为中心的半球。由于完整的光照计算开销较高，本文使用了传统渲染引擎中常见的近似方法\cite{Hill_2014}，
+其中$L_i$表示来自方向${\boldsymbol{\omega}}_i$的入射辐射，$f\left({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)$为BRDF，积分域$\upOmega$为以
+表面法线$\boldsymbol{n}$为中心的半球。由于完整的光照计算开销较高，本文使用了传统渲染引擎中常见的近似方法\cite{Hill_2014}，
 使用分裂和近似以进一步减少计算量。
 
 \section{实验与结果分析}
@@ -249,34 +247,11 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
 并对实验结果进行分析。
 \subsection{数据集}
 
-为了验证本文提出的NeRF光照分解管线的有效性，我们使用公开可获取的NeRF合成数据集进行实验。
-NeRF合成数据集是一个广泛使用的基准数据集，具有丰富的合成场景和高质量的图像数据，
-能够充分证明本文方法在不同场景下的泛化能力。其特点包括多种复杂的场景几何形状、
-不同的光照条件以及多视角的观察角度，是理想的实验数据。
+为了验证本文提出的数字资产解耦管线的有效性，本章选取了公开可获取的NeRF合成（NeRF-Synthetic）数据集进行实验。
+该数据集是广泛使用的基准数据集，提供了丰富的合成场景和高质量的图像数据，
+涵盖复杂的几何形状、多样的光照条件以及多视角的观察角度，适合充分评估本文方法在不同场景下的泛化能力。
 
-其中，本文选择了4个场景，作为可视化的定性实验，随后在完整数据集上进行定量实验。
-本文选择的可视化场景及理由如下：
-
-\fourthtitle{1} Lego：
-
-该场景包含一台由多种不同形态和颜色的积木组成的挖掘机，具有复杂的几何结构和显著的表面光泽，
-可以充分验证本文管线对高频几何细节的还原能力。
-
-\fourthtitle{2} Hotdog：
-
-该场景由圆润的食物和餐具组成，同时具有多样的高光反射特性，能够反映本文管线分解光滑表面的能力。
-
-\fourthtitle{3} Materials：
-
-该场景呈现了多种不同的材料，如镜面金属、磨砂金属等，每种材料具有不同的光反射属性，
-能够满足验证管线识别金属或高光区域并分解的能力。
-
-\fourthtitle{4} Mic：
-
-该场景包括了一些微小的物体和细节，如精细结构的物体表面，并且主体材质多为磨砂金属，
-可以用来验证管线在高精度要求下的适用性。
-
-以上四个场景的预览如图\ref{fig:exp_scene}所示。
+本文基于完整数据集开展了一系列实验，并从中选择4个代表性场景进行结果的可视化展示。这4个场景的预览如图\ref{fig:exp_scene}所示。
 
 \begin{figure}[H]
   \centering
@@ -307,11 +282,9 @@ NeRF合成数据集是一个广泛使用的基准数据集，具有丰富的合�
 
 \subsection{多种工作流分解效果实验}
 本节展示了NeRF光照分解管线在处理任意工作流资产时的解耦效果。
-在2.2.3中，我们详细介绍了3种不同的工作流，分别是Metallic工作流、Specular工作流
-以及Blinn-Phong工作流。这些工作流至今仍在传统渲染引擎中得到广泛应用，
-本节实验将基于这三种工作流进行分解，并展示其中4个具有代表性的不同场景可视化展示，
-以定性证明本文管线能够对多种工作流进行分解。随后，本文对数据集中的全部场景进行定量比较，
-分析了不同工作流对分解效果的影响。
+\ref{sec:workflow}详细介绍了3种不同的工作流，分别是Metallic工作流、Specular工作流
+以及Blinn-Phong工作流。这些工作流至今仍在传统渲染引擎中广泛应用，
+本节实验将基于这三种工作流进行分解，以定性实验证明本文管线分解的能力，通过定量比较分析不同工作流对分解效果的影响。
 
 \newpage
 
@@ -458,7 +431,6 @@ Blinn-Phong工作流漫反射颜色分解的效果显著低于其它两个工作
       Drums & 24.55 & 0.078 & 0.922 & 23.61 & 0.083 & 0.910 & 23.80 & 0.082 & 0.916 \\
       Ficus & 24.68 & 0.079 & 0.932 & 24.28 & 0.082 & 0.926 & 24.18 & 0.087 & 0.923 \\
       Ship & 26.17 & 0.168 & 0.824 & 27.74 & 0.176 & 0.801 & 25.40 & 0.183 & 0.806 \\
-      \midrule
       Mean & 28.36 & 0.071 & 0.934 & 28.45 & 0.073 & 0.927 & 26.96 & 0.086 & 0.919 \\
       \bottomrule
   \end{tabular}
@@ -495,13 +467,13 @@ Materials场景展示了其在多材质条件下的适用性，通过准确识�
 其次，为了检验管线输出结果在下游编辑任务中的应用，本课题选择了Maya作为实验平台。
 Maya是一款可以对网格体进行精细编辑的软件，是主流的数字资产编辑工具，
 与Maya兼容可以证明本文管线输出在传统流程中的适用性。在本实验中，
-本文修改了管线的输出的网格体以及贴图纹理，实验结果如图\ref{fig:rerender_setup}所示。
+本文修改了管线的输出的网格体以及贴图纹理，实验结果如图\ref{fig:edit_setup}所示。
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=0.8\linewidth]{ch3/maya_setup.png}
   \caption{下游编辑实验环境设置}
-  \label{fig:rerender_setup}
+  \label{fig:edit_setup}
 \end{figure}
 
 \newpage
@@ -553,7 +525,7 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/everything.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_normal.png}} &
       \subfloat{\includegraphics[width=0.3\textwidth]{ch3/geo_ablation/detail/wo_lap.png}} \\
-      Ours & Ours w/o $\mathcal{L}_{\rm{lap}}$ & Ours w/o $\mathcal{L}_{\rm{nrm}}$ \\
+      Ours & Ours w/o $\mathcal{L}_{\rm{lap}}$ & Ours w/o $\mathcal{L}_{\rm{normal}}$ \\
 
   \end{tabular}
 
@@ -578,10 +550,9 @@ Maya是一款可以对网格体进行精细编辑的软件，是主流的数字�
   \centering
   \caption{不同损失函数的定量消融实验结果}
   \label{tab:loss_ablation}
-  \begin{tabular}{ccc|ccc}
+  \begin{tabular}{ccc ccc}
     \toprule
     \multicolumn{3}{c|}{损失函数组合} & \multicolumn{3}{c}{评估指标} \\
-    \midrule
     $\mathcal{L}_{normal}$ & $\mathcal{L}_{laplacian}$ & $\mathcal{L}_{color}$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
     \midrule
     \checkmark & & & 26.49 & 0.187 & 0.805 \\

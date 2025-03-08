@@ -110,9 +110,9 @@ MLP的结构如图~\ref{fig:mlp}所示。
 但直接使用原始坐标输入MLP会导致明显的频谱偏差\cite{pmlr-v97-rahaman19a}，
 即网络倾向于优先学习低频信号，难以捕捉表面纹理或尖锐边缘等高频细节。为解决这一问题，
 Tancik等人\cite{tancik2020fourier}引入了傅里叶坐标编码（Fourier Positional Encoding），
-利用傅里叶基函数将$d$维坐标$\mathbf{x}\in\mathbb{R}^d$投影至高维空间。其计算方式如下：
+利用傅里叶基函数将$d$维坐标$\boldsymbol{x}\in\mathbb{R}^d$投影至高维空间。其计算方式如下：
 \begin{equation}
-\gamma(\mathbf{x})=\left[\sin\left(2^0\pi \mathbf{x}\right),\cos\left(2^\pi \mathbf{x}\right),\ldots,\sin\left(2^{K-1}\pi \mathbf{x}\right),\cos\left(2^{K-1}\pi \mathbf{x}\right)\right]
+\gamma(\boldsymbol{x})=\left[\sin\left(2^0\pi \boldsymbol{x}\right),\cos\left(2^\pi \boldsymbol{x}\right),\ldots,\sin\left(2^{K-1}\pi \boldsymbol{x}\right),\cos\left(2^{K-1}\pi \boldsymbol{x}\right)\right]
 \label{eq:fourier_encoding}
 \end{equation}
 其中$K$表示频率层级。傅里叶坐标编码有效缓解了频谱偏差，使得MLP能够用于体积或者空间的建立，为后续的神经表示任务奠定了技术基础。
@@ -232,15 +232,15 @@ Elu函数的图像如图\ref{fig:elu}所示。当输入大于0时，该函数行
 Sinusoid激活函数使用周期性的正弦函数，其输出范围在$[-1,1]$，由Sitzmann等人\cite{sitzmann2020implicit}
 提出并应用于SIREN（Sinusoidal Representation Networks）。
 \begin{equation}\label{eq:siren}
-\phi_i(x_i)=\sin\Bigl(\omega_0\,W_i\,x_i+b_i\Bigr)
+\phi_i(x_i)=\sin\Bigl(\lambda\,{\boldsymbol{W}}_i\,x_i+b_i\Bigr)
 \end{equation}
-其中，$\omega_0$ 是可学习的频率缩放因子，决定了正弦函数的振荡速率，$W_i$为权重矩阵。与ReLU等常见激活函数不同，
-正弦函数的周期性特性能够让网络更自然地表示高频信息，权重矩阵$W_i$与频率因子$\omega_0$则共同影响输入信号的频域分布，
+其中，$\lambda$ 是可学习的频率缩放系数，决定了正弦函数的振荡速率，${\boldsymbol{W}}_i$为权重矩阵。与ReLU等常见激活函数不同，
+正弦函数的周期性特性能够让网络更自然地表示高频信息，权重矩阵${\boldsymbol{W}}_i$与频率系数$\lambda$则共同影响输入信号的频域分布，
 使网络能够自适应地平衡低频轮廓和高频细节的建模能力，如图\ref{fig:siren_compare}所示。
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=0.6\linewidth]{Siren.png}
+  \includegraphics[width=0.6\linewidth]{ch2/Siren.png}
   \caption{激活函数对比\cite{sitzmann2020implicit}}
   \label{fig:siren_compare}
 \end{figure}
@@ -255,9 +255,9 @@ Sinusoid激活函数使用周期性的正弦函数，其输出范围在$[-1,1]$�
 网络的输出是连续的数值，因此通常选择均方误差（Mean Squared Error，MSE）损失函数来评估预测与真实数值之间的距离。
 具体定义为：
 \begin{equation} 
-  \mathcal{L}_{\text{MSE}}=\frac{1}{N}\sum{i=1}^{N}\left|y_i - \hat{y}_i\right|^2 
+  \mathcal{L}_{\text{MSE}}=\frac{1}{n}\sum{i=1}^{n}\left|y_i - \hat{y}_i\right|^2 
 \end{equation}
-其中$y_i$表示真实值，$\hat{y}_i$表示模型预测值，$N$为数据样本的数量。
+其中$y_i$表示真实值，$\hat{y}_i$表示模型预测值，$n$为数据样本的数量。
 均方误差直观且易于优化，广泛应用于图像重建、信号预测等任务中。
 
 除了基本的损失函数外，在神经网络训练中经常会引入正则化项，以实现对模型参数或输出结果的额外约束。
@@ -266,7 +266,7 @@ Sinusoid激活函数使用周期性的正弦函数，其输出范围在$[-1,1]$�
 这时就可以引入平滑正则化项来引导网络的输出更加平滑。
 常见的平滑正则化方法包括全变分（Total Variation，TV）正则化，其定义为：
 \begin{equation} 
-  \mathcal{L}_{\text{TV}}(I)=\sum_{i,j}\sqrt{\left(I_{i+1,j}-I_{i,j}\right)^2+\left(I_{i,j+1}-I_{i,j}\right)^2} 
+  \mathcal{L}_{\text{TV}}(\boldsymbol{I})=\sum_{i,j}\sqrt{\left(I_{i+1,j}-I_{i,j}\right)^2+\left(I_{i,j+1}-I_{i,j}\right)^2} 
 \end{equation} 
 其中$I_{i,j}$代表图像在像素位置$(i,j)$的数值。通过最小化该项，可以有效减少图像中的噪声和不规则的变化，使结果变得更加平滑。
 
@@ -274,7 +274,7 @@ Sinusoid激活函数使用周期性的正弦函数，其输出范围在$[-1,1]$�
 使模型倾向于选择权重较小的解，从而有效地提高模型的泛化性能。
 $L_2$正则化项可以由以下公式定义：
 \begin{equation}
-  \mathcal{L}_{L_2}=\sum{k}\left|\omega_k\right|^2 
+  \mathcal{L}_{\mathrm{L_2}}=\sum{k}\left|\omega_k\right|^2 
 \end{equation} 
 其中，$\omega_k$表示模型中的第$k$个参数，$\lambda$ 为控制正则化强度的权重超参数，数值越大，$L_2$正则化项的约束效果越强。
 
@@ -316,15 +316,15 @@ $L_2$正则化项可以由以下公式定义：
 计算表面点的辐射亮度（Radiance）。具体计算过程如公式\eqref{eq:rendering_equation}：
 \begin{equation}
   \label{eq:rendering_equation}
-  L_o\left({\bf{x}},\omega_o\right)=\int_{\upOmega}f_r\left({\bf{x}},\omega_i,\omega_o\right)\cdot L_i\left({\bf{x}},
-  \omega_i\right)\left(\omega_i\cdot\mathbf{n}\right)\,\mathrm{d}\omega_i
+  L_o\left({\boldsymbol{x}},{\boldsymbol{\omega}}_o\right)=\int_{\upOmega}f_r\left({\boldsymbol{x}},{\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)\cdot L_i\left({\boldsymbol{x}},
+  {\boldsymbol{\omega}}_i\right)\left({\boldsymbol{\omega}}_i\cdot\boldsymbol{n}\right)\,\mathrm{d}{\boldsymbol{\omega}}_i
 \end{equation}
-其中，$L_o\left({\bf{x}},\omega_o\right)$表示从表面点$\bf{x}$沿观察方向$\omega_o$看到的辐射亮度，
-$L_i\left({\bf{x}},\omega_i\right)$是从入射方向$\omega_i$到达表面点$\bf{x}$的光源辐射亮度，
-$f_r\left({\bf{x}},\omega_i,\omega_o\right)$是BRDF，
-它决定了光线从入射方向$\omega_i$到反射方向$\omega_o$的散射方式，且依赖于表面的材质属性。
-$\left(\omega_i\cdot\bf{n}\right)$表示入射光与表面法线$\bf{n}$的点积，代表表面与光源的接触程度，
-而$\mathrm{d}\omega_i$是入射光方向的微小立体角元素。
+其中，$L_o\left({\boldsymbol{x}},{\boldsymbol{\omega}}_o\right)$表示从表面点$\boldsymbol{x}$沿观察方向${\boldsymbol{\omega}}_o$看到的辐射亮度，
+$L_i\left({\boldsymbol{x}},{\boldsymbol{\omega}}_i\right)$是从入射方向${\boldsymbol{\omega}}_i$到达表面点$\boldsymbol{x}$的光源辐射亮度，
+$f_r\left({\boldsymbol{x}},{\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)$是BRDF，
+它决定了光线从入射方向${\boldsymbol{\omega}}_i$到反射方向${\boldsymbol{\omega}}_o$的散射方式，且依赖于表面的材质属性。
+$\left({\boldsymbol{\omega}}_i\cdot\boldsymbol{n}\right)$表示入射光与表面法线$\boldsymbol{n}$的点积，代表表面与光源的接触程度，
+而$\mathrm{d}{\boldsymbol{\omega}}_i$是入射光方向的微小立体角元素。
 
 渲染方程的核心思想是通过积分所有可能的光源对表面反射的贡献，计算出最终的观察光照。
 其在实际应用中能够模拟多种光照现象，包括漫反射、镜面反射、折射以及其他复杂的光学效应。
@@ -352,7 +352,7 @@ $\left(\omega_i\cdot\bf{n}\right)$表示入射光与表面法线$\bf{n}$的点�
 但通过经验参数（如光泽度、反射系数等）的调控，依然能够生成具有一定真实感的光照效果。
 由于计算复杂度较低，经验性模型广泛应用于实时渲染或资源受限的场景。
 
-\subsection{工作流}
+\subsection{工作流} \label{sec:workflow}
 工作流（Workflow）在计算机图形学中指的是一套标准化的参数与贴图生成流程，它定义了如何结合和组合各类材质参数和贴图，
 以表述数字资产表面不同的光学属性。简言之，工作流决定了如何构建数字资产的表面属性，使其能够符合特定的着色模型的计算需求。
 因此，选择适当的工作流对于高效且精准地表达材质的视觉效果至关重要。
@@ -361,11 +361,11 @@ $\left(\omega_i\cdot\bf{n}\right)$表示入射光与表面法线$\bf{n}$的点�
 进行光照计算与视觉效果渲染。不同的工作流基于不同的物理或经验性模型，表达表面特性的方式也有所不同。
 本节介绍三种工作流兼具了基于物理的以及非物理的着色模型，并且仍在现代渲染引擎和项目中广泛使用。
 
-\subsubsection*{（1）金属度工作流}
+\subsubsection*{（1）Metallic工作流}
 
 该工作流利用金属度（Metallic）贴图区分金属与非金属区域，使用粗糙度（Roughness）描述表面的粗糙程度。
 由于该工作流直接描述物体表面的金属性质，因此渲染效果更易符合预期。在该工作流的数字资产中，共使用三张纹理：
-基础色（Albedo）纹理在金属材质中表示镜面反射颜色，而在非金属中表示漫反射颜色，记为$\mathbf{b}$；
+基础色（Albedo）纹理在金属材质中表示镜面反射颜色，而在非金属中表示漫反射颜色，记为$\boldsymbol{b}$；
 金属度贴图区分金属与非金属区域，记为$m$；粗糙度描述表面的粗糙程度，记为$r$。
 
 金属度工作流可以使用微表面模型的Cook-Torrance BRDF完成计算，该模型将渲染方程中的$f_r$分为漫反射项$f_d$
@@ -383,39 +383,38 @@ f_d=\frac{1-m}{\pi}
 高光反射项$f_s$表示光线在光滑表面上按镜面反射规律反射的部分，通常依赖于入射光和观察方向与表面法线之间的角度关系，
 可以被表示为：
 \begin{equation}\label{eq:specular}
-f_s(\omega_o,\omega_i)=\frac{D({\bf{h}};r)\cdot F(\omega_o,{\bf{h}};{\bf{b}},m)\cdot G(\omega_i,\omega_o,{\bf{h}};r)}
-{4\cdot({\bf{n}}\cdot\omega_i)\cdot({\bf{n}}\cdot\omega_o)}
+f_s({\boldsymbol{\omega}}_o,{\boldsymbol{\omega}}_i)=\frac{D({\boldsymbol{h}};r)\cdot F({\boldsymbol{\omega}}_o,{\boldsymbol{h}};{\boldsymbol{b}},m)\cdot G({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o,{\boldsymbol{h}};r)}
+{4\cdot({\boldsymbol{n}}\cdot{\boldsymbol{\omega}}_i)\cdot({\boldsymbol{n}}\cdot{\boldsymbol{\omega}}_o)}
 \end{equation}
 其中，$D$是法线分布函数（Normal Distribution Function, NDF），$F$是菲涅尔（Fresnel）反射项，$G$是几何遮蔽（Geometry）
-项，$\bf{h}$是半角向量，$\bf{n}$为表面法线。针对$D$项、$F$项以及$G$项的计算，不同的研究中针对着色风格均提出了多种实现，
+项，$\boldsymbol{h}$是半角向量，$\boldsymbol{n}$为表面法线。针对$D$项、$F$项以及$G$项的计算，不同的研究中针对着色风格均提出了多种实现，
 接下来本文将介绍主流的几种计算方法。
 
 在大多数渲染器中，$D$项通常使用GGX\cite{walter2007microfacet}计算，使用粗糙度控制其锐利程度：
 \begin{equation}\label{eq:D_ggx}
-D({\bf{h}};r)=\frac{r^2}{\pi\Bigl(({\bf{n}}\cdot{\bf{h}})^2(r^4-1)+1\Bigr)^2}
+D({\boldsymbol{h}};r)=\frac{r^2}{\pi\Bigl(({\boldsymbol{n}}\cdot{\boldsymbol{h}})^2(r^4-1)+1\Bigr)^2}
 \end{equation}
 
 同时，为了在可微渲染中使用，$D$项也可以由球面高斯（Spherical Gaussians）近似计算为：
-
 \begin{equation}\label{eq:Dsg}
-D_{\rm{SG}}({\bf{n}};r)=\frac{1}{\pi r^4}\exp\Biggl(\frac{2}{r^4}\Bigl({\bf{n}}\cdot{\bf{h}}-\mathbf{1}\Bigr)\Biggr)
+D_{\rm{SG}}({\boldsymbol{n}};r)=\frac{1}{\pi r^4}\exp\Biggl(\frac{2}{r^4}\Bigl({\boldsymbol{n}}\cdot{\boldsymbol{h}}-1\Bigr)\Biggr)
 \end{equation}
 
 F项可以根据Schlick等人\cite{schlick1994inexpensive}的研究近似计算，由如下公式给出：
 \begin{equation}
   \label{eq:F}
-  F(\omega_o,{\bf{h}};{\bf{b}},m)=F_0+\bigl(1-F_0\bigr)\Bigl(1-(\omega_o\cdot{\bf{n}})^5\Bigr)
+  F({\boldsymbol{\omega}}_o,{\boldsymbol{h}};{\boldsymbol{b}},m)=F_0+\bigl(1-F_0\bigr)\Bigl(1-({\boldsymbol{\omega}}_o\cdot{\boldsymbol{n}})^5\Bigr)
 \end{equation}
 其中，$F_0$ 项可以通过公式\eqref{eq:F_0}表示为：
 \begin{equation}
   \label{eq:F_0}
-  F_0=0.04(1-m)+{\bf{b}}m
+  F_0=0.04(1-m)+{\boldsymbol{b}}m
 \end{equation}
 
 最后，G项可以根据Heitz等人\cite{heitz2014understanding}的研究使用Smith联合遮蔽阴影函数（Smith Joint Masking-Shadowing），计算方式如下：
 \begin{equation}
   \label{eq:G}
-  G(\omega_i,\omega_o,{\bf{n}};r)=G_{\rm{GGX}}(\omega_i\cdot{\bf{n}})\,G_{\rm{GGX}}(\omega_o\cdot{\bf{n}})
+  G({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o,{\boldsymbol{n}};r)=G_{\rm{GGX}}({\boldsymbol{\omega}}_i\cdot{\boldsymbol{n}})\,G_{\rm{GGX}}({\boldsymbol{\omega}}_o\cdot{\boldsymbol{n}})
 \end{equation}
 其中，$G_{\rm{GGX}}$ 由公式\eqref{eq:G_ggx}计算：
 \begin{equation}
@@ -433,9 +432,9 @@ F项可以根据Schlick等人\cite{schlick1994inexpensive}的研究近似计算�
 在计算上，Specular工作流也使用Cook-Torrance BRDF，区别在于部分计算方式不同。首先，对于上文中公式\eqref{eq:F}所述的菲涅尔项$F$，
 Specular工作流替换了其中的$F_0$：
 \begin{equation}\label{eq:F0_spec}
-F_0={\bf{c}}_s
+F_0={\boldsymbol{c}}_s
 \end{equation}
-其中，${\bf{c}}_s$代表镜面反射纹理包含的颜色。
+其中，${\boldsymbol{c}}_s$代表镜面反射纹理包含的颜色。
 
 在计算漫反射项$f_d$时不再根据金属度进行插值，而是使用菲涅尔项$F$作为插值系数：
 \begin{equation}\label{eq:diffuse_spec}
@@ -447,7 +446,7 @@ f_d=\frac{1-F}{\pi}
 
 该工作流基于Blinn-Phong经验性着色模型，通常依赖漫反射（Diffuse）、高光反射（Specular）贴图来模拟光照效果。其中高光反射参数在公式中实现了高光部分的近似计算，以光斑的形式提供近似的光滑观感，高光反射项$f_s$计算方式如下：
 \begin{equation}\label{eq:specular_BlinnPhong}
-f_s=\max(\mathbf{n}\cdot \mathbf{h},0)^\alpha
+f_s=\max(\boldsymbol{n}\cdot \boldsymbol{h},0)^\alpha
 \end{equation}
 漫反射部分使用Lambertian经验模型。总体的计算方式可以通过如下公式表示：
 \begin{equation}\label{eq:diffuse_BlinnPhong}
@@ -455,17 +454,6 @@ f_d=\frac{1}{\pi}
 \end{equation}
 
 尽管该工作流并不严格遵循物理法则，且渲染效果无法与基于物理的模型相比拟，但它的计算开销较小，无需复杂的积分，适合用于对渲染效率有较高要求且对真实感要求较低的项目，非常适合于手机等移动端设备。
-
-\subsection{数字资产与着色模型的耦合}
-从前文的介绍可以看出，数字资产与着色模型之间存在着紧密的耦合关系。每种工作流预设了特定的参数组织方式，
-并且与相应的着色模型或反射模型密切绑定。例如，金属度工作流通常与基于物理的Cook-Torrance BRDF模型配合使用，
-以确保在渲染时金属与非金属材质的反射行为符合物理规律。如果工作流中预设的参数与着色模型所需的参数不匹配，
-可能导致最终渲染结果与预期不符，进而影响数字资产的效果和视觉质量。
-
-尽管这种耦合关系使得数字资产的制作流程更加直观，并且提高了资产制作的效率与规范性，但它也存在一定的局限。
-特别是在开发过程中，这种严格的绑定要求数字资产必须按照特定规范进行制作，从而限制了技术迭代的灵活性。
-在一些大型项目或长期维护的项目中，若需要升级着色模型，通常会导致大量现有数字资产需要重新制作或手动转换，
-消耗了巨大的时间和经济成本。
 
 \section{可微渲染理论基础}
 传统渲染过程将三维场景描述转换为二维图像，但在标准计算机图形学管线中，该过程通常是不可微的，
@@ -475,28 +463,25 @@ f_d=\frac{1}{\pi}
 其核心理念是致力于实现从三维场景到二维图像的映射过程中的可微性，从而能够通过误差反向传播直接优化场景参数。
 因此，这一技术在计算机视觉和三维重建等任务中具有重要价值。
 
-可微渲染的核心目标是计算渲染图像相对于场景参数的梯度，即$\tfrac{\partial I}{\partial \upPhi}$，
+可微渲染的核心目标是计算渲染图像相对于场景参数的梯度，即${\partial I}/{\partial \upPhi}$，
 其中$I$是渲染图像，$\upPhi$包含几何、材质、光照和摄像机参数。由于渲染过程中的某些操作（如光栅化、可见性计算和光照建模）
 通常具有离散性或复杂的非线性特性，使得计算其导数较为困难，不同的可微渲染方法针对这些挑战提出了解决方案。
 接下来，本文将分别介绍可微渲染中常见的光照表示技术和几何形状表示方法。
 
-\subsection{基于图像的照明与近似}
-可微渲染中的光照表示需要满足多个关键需求，包括精确性、可微性以及对复杂光照环境的高效建模。
+\subsection{基于图像的照明} \label{sec:IBL}
+由于可微渲染的性质，光照表示技术需要满足连续可微，并能够使用尽量少的参数对复杂光照环境进行建模。
 在这一背景下，基于图像的光照（Image Based Lighting，IBL）技术成为广泛应用的选择。
-在完整的渲染方程\eqref{eq:rendering_equation}中，常规离散光源被表示为$L_i(\mathbf{x},\omega_i)$，
-其在计算时需要考虑着色点的位置，而在IBL中则假设环境处于“无限远”状态。也就是说，
-任何一处的光源所发出的光线都是平行的，而且其辐射强度在空间中是均匀的。这种假设使得对于场景中任何一点，
-入射光的强度仅依赖于光线的方向，而不依赖于具体的位置，仅需计算$L_i(\omega_i)$
-
-此外，可微渲染需要光照模型在物理上保持连续性，从而支持梯度的计算与传播。IBL采用环境贴图存储光照数据，
-通过球面投影方式在空间中形成自然的连续分布。相比离散的点光源，环境贴图能够以较高的分辨率捕捉光照场景中的细节，
-同时在可微渲染的优化过程中避免了不连续性对梯度的影响。这种连续性确保了光照参数的可导性，
-从而能够在可微渲染中有效优化与光照相关的参数。
+在完整的渲染方程\eqref{eq:rendering_equation}中，常规离散光源被表示为$L_i(\boldsymbol{x},{\boldsymbol{\omega}}_i)$，
+其在计算时需要考虑着色点的位置。而在IBL中则假设环境处于“无限远”状态，任何一处的光源所发出的光线都是平行的，
+而且辐射强度在空间中是均匀的。这种假设使得在计算任意一点的入射光强度时，可以简化为计算$L_i({\boldsymbol{\omega}}_i)$，
+仅需要入射光线的方向，而不依赖于具体的位置。IBL采用环境贴图存储光照数据，
+相比离散的点光源，环境贴图能够以更高的分辨率还原光照场景中的细节，同时在可微渲染的优化过程中避免了不连续性对梯度的影响。
+这种连续性确保了光照参数的可导性，从而能够在可微渲染中有效优化与光照相关的参数。
 
 除此之外，Hill等人\cite{Hill_2014}引入了分裂和近似（Split-Sum Approximation），并将其应用于现代即时渲染中，以进一步降低计算量。
 分裂和近似方法主要目的是将原本公式\eqref{eq:rendering_equation}中需要在半球上计算的高维积分
-拆分成两个易于预计算并在运行时快速查表获得的部分，从而大大降低计算成本，
-同时获得足够精确的视觉效果。分裂和近似的思想可以由公式\eqref{eq:int_approx}表示：
+拆分成两个易于预计算并在运行时快速查表获得的部分以降低计算成本，
+同时在视觉效果上几乎没有损失。分裂和近似的思想可以由公式\eqref{eq:int_approx}表示：
 \begin{equation}
   \int f(x)g(x){\rm{d}}x\approx \int{f(x){\rm{d}}x} \int{g(x){\rm{d}}x}
   \label{eq:int_approx}
@@ -505,13 +490,12 @@ f_d=\frac{1}{\pi}
 公式\eqref{eq:int_approx}将两个函数乘积的积分近似为两个函数积分的乘积，
 当该思想应用于渲染方程中的镜面反射项时，则镜面反射项可以通过以下形式近似计算：
 \begin{equation}
-  L(\omega_o)\approx 
-  \int_{\upOmega}{f(\omega_i\cdot{\bf{n}}){\rm{d}}\omega_i}
-  \int_{\upOmega}{L_i(\omega_i)D(\omega_i,\omega_o)(\omega_i\cdot{\bf{n}}){\rm{d}}\omega_i}
+  L({\boldsymbol{\omega}}_o)\approx 
+  \int_{\upOmega}{f({\boldsymbol{\omega}}_i\cdot{\boldsymbol{n}}){\rm{d}}{\boldsymbol{\omega}}_i}
+  \int_{\upOmega}{L_i({\boldsymbol{\omega}}_i)D({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o)({\boldsymbol{\omega}}_i\cdot{\boldsymbol{n}}){\rm{d}}{\boldsymbol{\omega}}_i}
   \label{eq:L_omega_o_approx}
 \end{equation}
-
-其中，第一项表示白色环境光照的镜面BSDF积分，取决于参数$\cos{\theta}=\omega_i\cdot{\mathbf{n}}；$
+其中，第一项表示白色环境光照的镜面BSDF积分，取决于参数$\cos{\theta}={\boldsymbol{\omega}}_i\cdot{\boldsymbol{n}}；$
 第二项表示法线分布函数与入射光的积分，当采用环境贴图技术时，该项可以被视作按照不同的表面粗糙度对环境贴图进行过滤，
 也可以通过Mipmap等技术预先进行计算。通过IBL技术以及分裂和近似，着色时的计算量得以大幅减少，
 因此这两项技术对于可微渲染任务来说不可或缺。
@@ -564,7 +548,7 @@ DMTet使用离散的SDF表示每个顶点相对于原位置的偏移量，通过
 网格体拓扑相对固定、无法表示细微高频细节的情况。
 
 DMTet的优化过程如下，当给定一个四面体网格（Tetrahedral Grid），对于网格中的每个顶点v，
-DMTet学习对应的SDF值$s$和变形向量$\upDelta\mathbf{v}$，随后根据学习到的SDF值生成三角形面，
+DMTet学习对应的SDF值$s$和变形向量$\upDelta\boldsymbol{v}$，随后根据学习到的SDF值生成三角形面，
 构成网格体。
 
 DMTet从SDF生成三角形面的计算方式如图\ref{fig:dmtet_calc}所示，其中，标量$s$表示SDF值，
@@ -572,12 +556,12 @@ DMTet从SDF生成三角形面的计算方式如图\ref{fig:dmtet_calc}所示，�
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{SDFtoMesh.png}
+  \includegraphics[width=0.5\textwidth]{ch2/SDFtoMesh.png}
   \caption{DMTet计算三角形面的过程}
   \label{fig:dmtet_calc}
 \end{figure}
 
-\section{NeRF理论基础}【写的不行】
+\section{NeRF理论基础}
 本节介绍NeRF的基本理论知识和框架。NeRF通过融合辐射场建模与可微分体积渲染，
 实现了从多视角二维图像建立三维场景隐式表示的能力。本章节将详细介绍神经辐射场的基本理论框架、关键技术要点。
 
@@ -586,36 +570,34 @@ NeRF作为计算机视觉领域的一项前沿进展，延续了基于坐标的�
 但其建模对象从单一几何属性升级为辐射场函数。NeRF的基本原理是通过深度学习将三维空间中的点映射到其对应的颜色和密度，
 本身的功能可以用公式\eqref{eq:nerf_mapping}定义：
 \begin{equation}
-  F_{\upTheta}:({\bf{x}}, {\bf{d}})\rightarrow({\bf{c}},\sigma)
+  F_{\upTheta}:({\boldsymbol{x}}, {\boldsymbol{d}})\rightarrow({\boldsymbol{c}},\sigma)
   \label{eq:nerf_mapping}
 \end{equation}
-
-其中，$\mathrm{x}\in\mathbb{R}^3$表示三维场景内的坐标，$\mathrm{d}\in\mathbb{S}^\mathbf{2}$
+其中，$\mathrm{x}\in\mathbb{R}^3$表示三维场景内的坐标，$\mathrm{d}\in\mathbb{S}^\boldsymbol{2}$
 表示观察方向的方位角和极角，$\mathrm{c}\in\mathbb{R}^3$表示场景在$\mathrm{x}$点、于观察方向$\mathrm{d}$
 进行观察时的RGB颜色，$\sigma$表示场景在$\mathrm{x}$点的密度，物理意义该点为是否存在物质或光学吸收现象，
 函数$F_{\upTheta}$由一个或多个MLP完成实现。NeRF的总体框架如图\ref{fig:nerf_pipe}所示。
-\newpage
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=1.0\textwidth]{NeRFPipe.png}
+  \includegraphics[width=1.0\textwidth]{ch1/NeRFPipe.png}
   \caption{NeRF训练和渲染过程\cite{Mildenhall_2020}}
   \label{fig:nerf_pipe}
 \end{figure}
 
 NeRF的基础结构使用了前文介绍的基于坐标的多层感知机，并利用公式\eqref{eq:fourier_encoding}表示的傅里叶变换对
-输入坐标$\bf x$进行了位置编码，显著提升了NeRF对高频几何细节的重建能力。
+输入坐标$\boldsymbol x$进行了位置编码，显著提升了NeRF对高频几何细节的重建能力。
 
 \subsection{NeRF的体积渲染}
 
-本节介绍如何通过NeRF通过观察方向$\bf d$计算输出像素颜色$\bf c$。
+本节介绍如何通过NeRF通过观察方向$\boldsymbol d$计算输出像素颜色$\boldsymbol c$。
 这一过程的核心是通过体积渲染（Volume Rendering）方法来合成二维图像。
-体积渲染将沿着每条射线对函数$F_{\upTheta}$输出的颜色和密度进行积分，计算射线的最终输出颜色$\bf c$，该过程可以由以下公式表示：
+体积渲染将沿着每条射线对函数$F_{\upTheta}$输出的颜色和密度进行积分，计算射线的最终输出颜色$\boldsymbol c$，该过程可以由以下公式表示：
 \begin{equation}\label{eq:volume_rendering}
-C=\int_{t_n}^{t_f}T(t)\,\sigma(r(t))\,{\bf c}(r(t),{\bf d})\,\mathrm{d}t
+C=\int_{t_n}^{t_f}T(t)\,\sigma(r(t))\,{\boldsymbol c}(r(t),{\boldsymbol d})\,\mathrm{d}t
 \end{equation}
-其中，$t_f$和$t_n$分别代表沿着射线方向积分的起始和结束时刻。对沿方向$\bf{d}$发射的光线$r$，
-其$t$时刻所到达的点为$r(t)$。$\bf{c}$是三维空间中给定点$r(t)$在观察方向为$\bf{d}$时的颜色，
-$\sigma$是点$r(t)$的密度，颜色$\bf c$和密度$\sigma$由函数$F_{\upTheta}$计算。$T(t)$是从相机到$t$时刻位置的透射率，
+其中，$t_f$和$t_n$分别代表沿着射线方向积分的起始和结束时刻。对沿方向$\boldsymbol{d}$发射的光线$r$，
+其$t$时刻所到达的点为$r(t)$。$\boldsymbol{c}$是三维空间中给定点$r(t)$在观察方向为$\boldsymbol{d}$时的颜色，
+$\sigma$是点$r(t)$的密度，颜色$\boldsymbol c$和密度$\sigma$由函数$F_{\upTheta}$计算。$T(t)$是从相机到$t$时刻位置的透射率，
 $T(t)$的定义如下所示：
 \begin{equation}\label{eq:transmittance}
 T(t)=\exp\Biggl(-\int_{t_n}^{t}\sigma(r(s))\,\mathrm{d}s\Biggr)
@@ -685,15 +667,11 @@ $H_{l}\times W_{l}$为特征图尺寸，$w_{l}$为对应层的可学习权重向
 随后介绍了相关的激活函数、损失函数等概念。对于MLP在三维几何隐式建模中的应用，傅里叶位置编码和正弦激活函数有效解决了
 传统激活函数在高频细节捕捉上的不足。最后，本文讨论了自动编码器在光照参数压缩与重构中的作用。
 
-随后，本章对传统渲染管线进行了梳理，详细解析了渲染方程和着色模型的基本原理，
-并探讨了数字资产制作过程中工作流与着色模型之间的耦合关系。
+由于本文工作旨在无缝对接传统渲染器，因此本章梳理了渲染方程及常见着色模型的基本原理，
+并介绍了数字资产制作流程与其对应的着色模型。
 
-接着，本章介绍了可微渲染的概念，指出传统渲染中因离散操作导致不可微性的问题，
-并介绍了基于不同几何表示的可微渲染方法及其优缺点。
+接着，本章阐述了可微渲染的概念，指出传统渲染过程中因离散操作而导致的不可微性问题，
+进一步总结了基于不同几何表示的可微渲染方法及其各自的优缺点。
 
-最后，本文重点介绍了NeRF技术，该技术通过体积渲染的方法，利用基于坐标的MLP，从多视角二维图像中重建场景的三维结构和外观。
-该技术不仅扩展了三维场景重建与新视角合成任务的可能性，同时为本文研究提供了重要的技术与理论基础。
-
-本章所介绍的基础知识既涵盖了传统图形学的经典方法，
-又展示了深度学习驱动下的前沿技术进展，为数字资产解耦及无缝对接传统渲染管线提供了丰富的技术支持。
-
+最后，本章着重对NeRF技术进行了介绍。NeRF是一项基于坐标MLP和可微体积渲染的方法，能够从多视角二维图像重建三维场景的结构与外观。
+这项技术拓展了三维场景重建与新视角合成任务的可能性，同时为本文研究提供了重要的技术与理论支撑。

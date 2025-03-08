@@ -41,13 +41,13 @@
 
 \section{光照表示能力分析}
 
-2.3.1介绍了IBL技术，该技术通过预滤波处理将半球积分转化为查表运算，实现了复杂全局光照的实时近似计算。
+\ref{sec:IBL}介绍了IBL技术，该技术通过预滤波处理将半球积分转化为查表运算，实现了复杂全局光照的实时近似计算。
 然而这种近似必然伴随物理真实性的折损：
-其核心假设将\eqref{eq:rendering_equation}渲染方程中的入射光照
-$L_i\left(\mathbf{x},\omega_i\right)$简化为$L(\omega_i)$，
-本质上忽略了着色点空间位置$\mathbf{x}$对入射光$L_i$的影响。
+其核心假设将渲染方程\eqref{eq:rendering_equation}中的入射光照
+$L_i\left(\boldsymbol{x},{\boldsymbol{\omega}}_i\right)$简化为$L({\boldsymbol{\omega}}_i)$，
+本质上忽略了着色点空间位置$\boldsymbol{x}$对入射光$L_i$的影响。
 这种降维处理导致IBL难以表示阴影等局部光照变化，如图\ref{fig:shadow_n_refl}所示，
-当着色点位于反射方向$\omega_i$相近的平面时，不同空间位置$\mathbf{x}$的着色点可能因为阴影而接收到完全不同的入射光$L_i$。
+当着色点位于反射方向${\boldsymbol{\omega}}_i$相近的平面时，不同空间位置$\boldsymbol{x}$的着色点可能因为阴影而接收到完全不同的入射光$L_i$。
 因此，在传统的即时渲染器中，IBL技术通常仅被用作阴影处的光照补充，而阴影之外的着色点则通过其它离散形式的光源进行计算。
 
 \begin{figure}[htb]
@@ -65,7 +65,6 @@ $L_i\left(\mathbf{x},\omega_i\right)$简化为$L(\omega_i)$，
   \label{eq:li_shadow}
   L_i=\left(1-s\right)L_{\rm{direct}}+sL_{\rm{env}},
   \end{equation}
-
 其中，$s$代表着色点处的阴影强度。该式反映出，直接光照的强度通常远高于环境光照，且只有直接光照能产生阴影，
 而环境光照均匀地来自于一个球形的穹顶。因此，当着色点完全位于阴影之外时，环境光的贡献可以忽略，
 直接光照主导；而当着色点进入阴影区域时，环境光的影响逐渐增加，成为主要的光照来源。
@@ -91,7 +90,7 @@ $L_i\left(\mathbf{x},\omega_i\right)$简化为$L(\omega_i)$，
 但是条件信息会从输入层开始全部作用于后续的每一层。另一种方法是将条件信息与原输入相乘，条件信息可以对输入进行缩放，
 以控制输入中哪些信息将进一步传递到后续的层。
 
-Perez等人\cite{Perez_2018}将加法和乘积的方法结合，以仿射变换的形式将条件信息与输入结合，
+Perez等人\cite{Perez_2018}将加法和乘积结合，以仿射变换的形式将条件信息添加到输入中，
 称之为基于特征的线性变换（Feature-wise Linear Modulation，FiLM）。
 仿射变换可以由公式\eqref{eq:film_affine}表示：
 \begin{equation}
@@ -102,15 +101,15 @@ Perez等人\cite{Perez_2018}将加法和乘积的方法结合，以仿射变换�
 
 对于MLP来说，可以将特殊的FiLM层插入到模型中，以对该层的输入应用特征仿射变换。
 FiLM参数（即偏移量$\beta$和缩放系数$\gamma$）由映射网络（Mappingnetwork）计算，
-该网络利用条件信息$\mathbf{z}$作为输入，完成条件信息到FiLM参数的映射。
+该网络利用条件信息$\boldsymbol{z}$作为输入，完成条件信息到FiLM参数的映射。
 在这种设计下，虽然FiLM参数能够直接参与主网络的运算，但其实际为映射网络的输出结果，
 因此FiLM参数不是传统意义上的具有固定权重的可学习参数，能够实现对主网络的调制。
 FiLM层的计算方式如公式\eqref{eq:film_layer}所示，
 \begin{equation}
 \label{eq:film_layer}
-\mathrm{FiLM}(\mathbf{x})=\gamma(\mathbf{z})\odot \mathbf{x}+\beta(\mathbf{z}).
+\mathrm{FiLM}(\boldsymbol{x})=\gamma(\boldsymbol{z})\odot \boldsymbol{x}+\beta(\boldsymbol{z}).
 \end{equation}
-其中$\gamma(\mathbf{z})$和$\beta(\mathbf{z})$由映射网络计算，
+其中$\gamma(\boldsymbol{z})$和$\beta(\boldsymbol{z})$由映射网络计算，
 $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之间逐个相乘。
 
 本文利用FiLM层，将阴影视为条件输入至网络，利用FiLM调制阴影参数，以实现本文将阴影加入光照表示的目标。
@@ -121,8 +120,8 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
 其核心思想是将阴影系数$s$作为额外的标量参数调制到网络中。
 当阴影系数为1时，在该模块的调制下，本文的网络将退化为一张环境光照贴图，其输出将全部为环境光照。
 当阴影系数为0时，则使本文的网络输出为直接光照的光照强度及颜色。该网络的结构如\ref{fig:nl_main_cn}所示，
-其接收入射光照的方向$\omega_i$作为输入，随后先调制阴影系数$s$，并在后续的层中逐步调制光照嵌入向量${\bf{z}}^l$，
-用以表示整张环境纹理。光照嵌入向量${\bf{z}}^l$和阴影系数$s$的生成将在后文进一步介绍。
+其接收入射光照的方向${\boldsymbol{\omega}}_i$作为输入，随后先调制阴影系数$s$，并在后续的层中逐步调制光照嵌入向量${\boldsymbol{z}}^l$，
+用以表示整张环境纹理。光照嵌入向量${\boldsymbol{z}}^l$和阴影系数$s$的生成将在后文进一步介绍。
 
 \begin{figure}[htb]
   \centering
@@ -131,16 +130,16 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
   \label{fig:nl_main_cn}
 \end{figure}
 
-对于映射网络，其结构如图\ref{fig:nl_main_cn}所示。该网络首先通过傅里叶编码将标量条件
+对于映射网络，其结构如图\ref{fig:mapping_cn}所示。该网络首先通过傅里叶编码将标量条件
 输入映射到高维特征空间，从而提取出多频率的信息，增强了输入的表达能力。接着，转换后的特征被送入一个小型MLP，
 该网络包含一个采用ELU激活函数的隐藏层，以捕捉输入数据的复杂特性；
 随后，一个线性激活的全连接层进一步将特征映射到所需维度，并最终通过重塑操作生成参数对。
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=0.6\linewidth]{ch4/mapping_net.png}
+  \includegraphics[width=0.8\linewidth]{ch4/mapping_net.png}
   \caption{映射网络结构图}
-  \label{fig:nl_main_cn}
+  \label{fig:mapping_cn}
 \end{figure}
 
 最终，该光照表示网络将会构建类似“体积”纹理的光照表示，如图\ref{fig:nl_light_volume}所示，其根据阴影系数来对直接光照和环境光照进行插值，
@@ -155,13 +154,12 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
 
 \subsection{潜空间自动编码器}
 
-对于上文提到的光照嵌入向量${\bf{z}}^l$，本文了参考Mark等人\cite{boss2021neural}的工作，通过自动编码器生成。
+对于上文提到的光照嵌入向量${\boldsymbol{z}}^l$，本文了参考Mark等人\cite{boss2021neural}的工作，通过自动编码器生成。
 \ref{sec:auto_encoder}中介绍了自动编码器对于可微渲染的作用，Mark等人使用真实的环境纹理对自动编码器进行预训练，
 该自动编码器能够将256$\times$256的环境纹理映射到128维向量，并使用多个损失函数约束潜空间，最终该自动编码器实现了
 对具备真实感的光照潜空间，非常适合神经光照相关的任务。
 
 该自动编码器通过四个损失函数的组合实现上述功能。首先是标准的重建损失$\mathcal{L}_{\mathcal{r}}$，可以通过以下公式定义：
-
 \begin{equation}
   \label{eq:reconstruction_loss}
   \mathcal{L}_{\mathcal{r}}=\mathbb{C}_{E\sim\mathcal{D}_{\mathrm{light}}}\left[\|E-\mathcal{G}\left(\mathcal{E}(E)\right)\|_{\mathrm{Frobenius}}^2\right].
@@ -189,22 +187,16 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
   \mathcal{L}_{\mathcal{s}}=\mathbb{C}_{\alpha\sim U\left(\mathbb{0},\mathbb{1}\right)}\left[\|J_{\mathcal{G}}\bigl(z(\alpha)\bigr)\cdot\frac{\partial z}{\partial\alpha}\|_{\mathrm{HS}}^2\right],
   \end{equation}
   其中$J_{\mathcal{G}}$为解码器的Jacobian矩阵，通过Hilbert-Schmidt范数惩罚路径曲率。
-  
-  最终的损失$\mathcal{L}$为上述四个损失的加权和，表达式为：
-  \begin{equation}
-  \label{eq:total_loss}
-  \mathcal{L}=\mathcal{L}_{\mathcal{r}}+\lambda_1\mathcal{L}_{\mathcal{c}}+\lambda_2\mathcal{L}_{\mathcal{a}}+\lambda_3\mathcal{L}_{\mathcal{s}}.
-\end{equation}
 
 \section{数据集的获取}
 
 由于本文希望SaNL能够学习到阴影与环境光照之间的关系，因此相较于其它的神经网络，
-SaNL需要收集额外的数据集。根据前文的设计，SaNL需要入射光线方向$\omega_i$、阴影系数$s$、光照嵌入$z_l$作为输入数据，
+SaNL需要收集额外的数据集。根据前文的设计，SaNL需要入射光线方向${\boldsymbol{\omega}}_i$、阴影系数$s$、光照嵌入$z^l$作为输入数据，
 以及入射光照$L_i$作为监督信号。本文通过渲染引擎收集了多组包含上述数据的合成数据集，下面介绍收集该数据集的方法及过程。
 
 \subsection{入射光线方向数据}
 
-在先前的研究中，入射光线方向$\omega_i$通常在训练时随机生成，不在数据集内提供。
+在先前的研究中，入射光线方向${\boldsymbol{\omega}}_i$通常在训练时随机生成，不在数据集内提供。
 本文考虑到入射光线方向与场景的几何形状直接相关，而IBL技术中，相似的几何形状可能在环境贴图中采样的区域相近，
 因此本文选择根据网格体来收集真实的场景几何形状。为了增强数据集的多样性，在选择网格体时应充分考虑包括不同的几何结构。
 同时，为了方便收集阴影系数数据，网格体也应有丰富的自遮挡。
@@ -242,8 +234,8 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 同时，为了获得更加多样的环境光照数据，这些立方体纹理会围绕$Z$轴随机旋转，尽可能地记录纹理中不同区域的光照。
 
 直接光照部分，本文使用单盏平行光模拟，随机生成光照方向。为了使直接光照更符合真实情况，
-直接光照的仰角随机范围为[15, 85]之间，方位角范围为[0, 360]之间。同时，为了增加网络对不同颜色的直接光照的泛化性，
-本文使用色温描述直接光照颜色，随机范围为[5000, 10000]开尔文。阴影数据$s$也同样由该盏直接光照在网格体上照射产生。
+直接光照的仰角随机范围为$[15, 85]$之间，方位角范围为$[0, 360]$之间。同时，为了增加网络对不同颜色的直接光照的泛化性，
+本文使用色温描述直接光照颜色，随机范围为$[5000, 10000]$开尔文。阴影数据$s$也同样由该盏直接光照在网格体上照射产生。
 直接光照和环境光照将按照公式\eqref{eq:li_shadow}进行插值，并输出为监督信号$L_i$。
 
 对于光照嵌入向量$z_l$，需要一张环境纹理$I$作为自动编码器进行计算，因此本文将上述环境光照和直接光照烘焙至
@@ -253,26 +245,24 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \begin{figure}[H]
   \centering
   % 这里可以控制图片宽度比例
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}[t]{0.42\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{ch4/data_set/before.png}
+    \includegraphics[width=\textwidth]{ch4/data_set/before.png}
     \caption{烘焙前}
   \end{subfigure}
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}[t]{0.42\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{ch4/data_set/after.png}
+    \includegraphics[width=\textwidth]{ch4/data_set/after.png}
     \caption{烘焙后}
   \end{subfigure}
   \caption{环境光照与直接光照烘焙}
   \label{fig:light_baking}
 \end{figure}
-
-最终，完整的数据收集过程如图\ref{fig:full_pipe}所示。
-
+结合上文所述的反射方向的计算过程，完整的数据收集方法如图\ref{fig:full_pipe}所示。
 \begin{figure}[htb]
   \centering
   % 这里可以控制图片宽度比例
-  \includegraphics[width=0.6\linewidth]{ch4/data_set/full_pipe.png}
+  \includegraphics[width=0.72\linewidth]{ch4/data_set/nl_dataset_big_cn.png}
   \caption{数据集完整收集流程}
   \label{fig:full_pipe}
 \end{figure}
@@ -282,11 +272,11 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 前文中，我们通过实验结果分析了管线无法处理阴影的原因，随后根据问题设计了SaNL，并收集了对应的数据进行训练。
 本节将使用SaNL作为光照表示技术，实现数字资产解耦管线，以提升管线的分解效果。
 
-由于本文第三章所设计的管线并不支持对阴影的建模，而SaNL的输入依赖于直接光照所产生的投影作为阴影系数$s$，
-因此有必要对阴影建模进行额外的实现和处理。现有的部分NeRF分解管线支持阴影的计算，
-但部分工作需要已知光源信息才能对直接光照的投影进行计算，而另外一些工作则依赖额外的光线追踪阶段。
-这些方法通常是为了适用于复杂的光照条件，由于本文的研究目标是对数字资产的合成数据进行分解，
-输入数据的光照环境在实验中更具有可控性，相比于真实数据中实时变化的光照条件，这为阴影系数的建模提供了有利的条件。
+由于本文第3章所设计的管线并不支持对阴影的建模，而SaNL的输入依赖于直接光照所产生的投影作为阴影系数$s$，
+因此有必要对阴影建模进行额外的实现和处理。现有的部分NeRF光照分解管线支持阴影的计算，
+但其需要光源信息已知才能对直接光照的投影进行计算，或者依赖额外的光线追踪阶段。
+这些方法的设计动机是为了适用于复杂的光照条件，而本文的研究目标是对数字资产的合成数据进行分解，
+输入数据的光照环境在实验中更具有可控性，相比于真实数据中实时变化的光照条件，本文可以简化阴影系数的建模。
 
 因此，在每张输入图像的光照条件不变的前提下，阴影系数可以被视为覆盖场景各处的贴图，
 这一方法类似于传统渲染技术中常见的烘焙光照贴图技术（Baked Light Map）。
@@ -313,8 +303,9 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \end{figure}
 
 本文采用了类似的策略，将阴影系数表示为一张灰度贴图，利用\ref{sec:mlp_texture}中所述的MLP纹理来进行估计。
-另外，考虑到在本课题的设置中，光照网络已经完成了一次阴影的计算，因此在最终的着色过程中，
-不再需要重复计算阴影。阴影的计算及输出如图\ref{fig:shadow_mapping}所示，阴影区域能够得到正确的区分。
+另外，考虑到在本课题的设置中，光照网络已经完成了一次阴影的计算，因此在最终的着色中，
+不再需要重复计算阴影，上文所述的着色过程不作修改。阴影的计算及输出如图\ref{fig:shadow_mapping}所示，
+图\ref{fig:shadow_map_by_mlp}为MLP纹理估计的阴影系数纹理，阴影区域能够得到正确的区分。
 
 \begin{figure}[H]
   \centering
@@ -335,6 +326,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
     \centering
     \includegraphics[width=\linewidth]{ch4/shadow/shadow_texture.png}
     \caption{阴影系数纹理}
+    \label{fig:shadow_map_by_mlp}
   \end{subfigure}
   \caption{阴影系数的计算}
   \label{fig:shadow_mapping}
@@ -343,7 +335,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \section{实验结果与分析}
 
 在前四节中，本文通过新颖的阴影调制模块实现了SaNL，能够在表示光照的同时将阴影与直接光照的信息进行建模。
-随后，本文将SaNL加入第三章的数字资产管线，以提升对网格体和表面属性分解的效果。在这一节中，
+随后，本文将SaNL加入第3章的数字资产管线，以提升对网格体和表面属性分解的效果。在这一节中，
 本文将首先对SaNL进行全面的实验，以验证其对光照的表示能力。随后，
 本文将带有SaNL的数字资产解耦管线与相关研究进行横向的定量定性对比，以显示本文方法的优越性。
 最后，本节还对管线进行了定量定性的消融实验，进一步说明了本文相关方法的工作原理和有效性。
@@ -440,7 +432,6 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \caption{局部放大对比}
   \label{fig:sanl_single_compare}
 \end{figure}
-
 图\ref{fig:sanl_single_compare_failure}展示了SaNL的失败案例，在这张环境纹理中，亮度和饱和度差异较低，
 同时考虑到输入网格体的椅背部分反射角度近似，但是部分位于阴影中、部分暴露于直接光照之下，
 因此网络难以区分直接光照和环境光照，导致高频细节还原失败，同时阴影处着色不正确。
@@ -470,8 +461,36 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 
 \subsection{完整管线实验}
 
-本节将该光照网络接入至本文第三章所设计的管线，并横向对比了与本文类似的工作进行定量定性的实验。
-图\ref{fig:full_rendering_result}展示了NeRD\cite{Boss_2021}、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
+本节使用基于SaNL的数字资产解耦管线进行试验，并横向对比了与本文类似的工作，评估了定量指标。
+本文选择与Mark等人\cite{Boss_2021}提出的NeRD以及Hasselgren等人\cite{10.5555/3600270.3601931}提出的nvdiffrecmc
+进行横向比较。NeRD的光照表示技术使用了SGs，不支持网格体的导出；nvdiffrecmc使用的是环境纹理贴图，
+支持网格体与纹理的导出。
+
+实验数据集本文选择了第3章使用的NeRF-Synthetic数据集，以及NeRD数据集、DTU数据集\cite{jensen2014large}，
+这些数据集包含了多套合成与实验室扫描数据，适合用于横向比较本文的工作。
+
+表\ref{tab:dataset_comparison}为本文方法与其它方法的定量比较结果。
+\begin{table}[h]
+  \centering
+  \caption{渲染结果定量比较}
+  \begin{tabular}{l ccc ccc ccc}
+      \toprule
+      & \multicolumn{3}{c}{NeRF-Synthetic} & \multicolumn{3}{c}{NeRD Dataset} & \multicolumn{3}{c}{DTU Dataset} \\
+      \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+      \midrule
+      NeRD & 26.11 & 0.172 & 0.776 & 27.24 & 0.183 & 0.824 & 23.69 & 0.127 & 0.812 \\
+      nvdiffrecmc & 26.37 & 0.085 & 0.931 & 27.61 & 0.063 & 0.952 & 25.78 & 0.088 & 0.916 \\
+      \textbf{Ours} & \textbf{26.93} & \textbf{0.057} & \textbf{0.963} & \textbf{28.07} & \textbf{0.054} & \textbf{0.965} & \textbf{26.41} & \textbf{0.053} & \textbf{0.947} \\
+      \bottomrule
+  \end{tabular}
+  \label{tab:dataset_comparison}
+\end{table}
+
+根据定量实验结果，所有方法的性能均在实验室扫描数据中
+有所下滑，这可能是因为实验室扫描数据的光照环境仍然有细微的变化，但本文管线在以上数据集中均取得了最优的成绩，可以证明本文方法的有效性。
+
+图\ref{fig:full_rendering_result}展示了NeRD、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
 尤其是在阴影覆盖的区域中，本文能够较好地还原场景表面细节。比如Lego场景中，
 红色线框和蓝色线框中的细节均能成功还原。
 
@@ -513,28 +532,8 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \label{fig:full_rendering_result}
 \end{figure}
 
-表\ref{tab:dataset_comparison}展示了本文方法与其它方法的定量比较结果。其中，NeRF-Synthetic数据集、NeRFactor数据集为合成数据，
-NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结果，本文管线在以上数据集中均取得了最优的成绩，可以证明本文方法的优越性。
-
-\begin{table}[h]
-  \centering
-  \caption{渲染结果定量比较}
-  \begin{tabular}{l ccc ccc ccc}
-      \toprule
-      & \multicolumn{3}{c}{NeRF-Synthetic} & \multicolumn{3}{c}{NeRD Dataset} & \multicolumn{3}{c}{DTU Dataset} \\
-      \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
-      \midrule
-      NeRD & 26.11 & 0.172 & 0.776 & 27.24 & 0.183 & 0.824 & 23.69 & 0.127 & 0.812 \\
-      nvdiffrecmc & 26.37 & 0.085 & 0.931 & 27.61 & 0.063 & 0.952 & 25.78 & 0.088 & 0.916 \\
-      \textbf{Ours} & \textbf{26.93} & \textbf{0.057} & \textbf{0.963} & \textbf{28.07} & \textbf{0.054} & \textbf{0.965} & \textbf{26.41} & \textbf{0.053} & \textbf{0.947} \\
-      \bottomrule
-  \end{tabular}
-  \label{tab:dataset_comparison}
-\end{table}
-
-图\ref{fig:rendering_detail_compare}展示了管线导出的网格体效果对比。本文的管线不仅在阴影处取得了更好的重建效果，
-同时也能够较为准确地对履带等阴影处的细节进行重建。
+渲染结果的细节比较如图\ref{fig:rendering_detail_compare}所示。
+本文的管线成功还原了阴影处的细节，相较于nvdiffrecmc等方法有显著的提升。
 
 \begin{figure}[H]
   \centering
@@ -571,7 +570,8 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
   \label{fig:rendering_detail_compare}
 \end{figure}
 
-图\ref{fig:mesh_export_compare}展示了管线导出的网格体效果对比。NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在阴影处错误估计了几何形状。
+本文还对导出的网格体质量进行了对比，如图图\ref{fig:mesh_export_compare}。
+NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在阴影处错误估计了几何形状。
 本文的管线不仅在阴影处取得了更好的重建效果，同时也能够较为准确地对履带等阴影处的细节进行重建。
 
 \begin{figure}[H]
@@ -611,9 +611,9 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
 
 \subsection{SaNL消融实验}
 
-本节将通过消融实验，证明SaNL在数字资产解耦任务中的有效性。图\ref{fig:}展示了本文管线使用及不使用SaNL时，
-在Metallic工作流中对Albedo分解效果的对比。可以清晰地看到，在阴影处的Albedo可以准确地还原物体原本的颜色，
-准确地区分出了浅色物体和深色物体，并且有准确的白平衡。
+本节将通过消融实验，证明SaNL在数字资产解耦任务中的有效性。图\ref{fig:albedo_ablation}展示了本文管线使用及不使用SaNL时，
+在Metallic工作流中对Albedo分解效果的对比。可以清晰地看到，加入了SaNL后的管线可以准确区分阴影与物体的固有色，
+在深色和浅色物体上都能正确分解，并且有准确的白平衡。
 
 \begin{figure}[H]
   \centering
@@ -674,16 +674,14 @@ NeRD数据集则包含则仅使用其中的三个合成场景。根据实验结�
 
 在本章节中，本文根据第3章中的管线以及相关研究的实验结果，分析了NeRF光照分解任务中，对阴影处数据还原效果较差的原因。
 本文认为，这种不足来自于IBL技术对光照的过度近似，忽略了着色点空间位置的光照计算会使得管线无法处理阴影，
-导致几何形状重建和反射属性的估计出现错误。
-
-因此，本文从阴影表示能力的角度出发，通过迁移传统即时渲染器中对直接光照和环境光照的假设，提出了一种新颖的光照表示方法。
+导致几何形状重建和反射属性的估计出现错误。为了解决以上问题，本文从阴影表示能力的角度出发，
+通过迁移传统即时渲染器中对直接光照和环境光照的假设，提出了一种新颖的光照表示方法。
 该光照表示方法能够同时表示阴影、直接光照以及环境光照，以避免阴影处光照分解失败的问题。
 
-在实现上，本文采用FiLM-SIREN块的结构，设计了神经光照表示SaNL，能够将阴影作为条件输入调制到网络中，以实现前文的理念。
+在具体实现上，本文采用FiLM-SIREN块的结构，设计了神经光照表示SaNL，能够将阴影作为条件输入调制到网络中，以实现前文的理念。
 由于SaNL的表示方式不同于其它工作，因此本文额外收集了包含阴影和几何数据的数据集。通过结合现有的潜空间编码器，
 SaNL不仅能够表示阴影，同时还具备物理真实感和连续性，成为了本文管线理想的光照表示方法。
 
-在实验中，本文通过首先对SaNL进行了测试。实验证明，SaNL能够还原多种直接光照与环境贴图。而在完整管线的实验中，
-本文通过横向对比证明了本文管线的先进性，同时消融实验也证明了SaNL成功解决了第3章管线的缺陷，成功还原了阴影处的数据。
+最后，本文首先对SaNL进行了实验。实验证明，SaNL能够还原多种直接光照与环境贴图。而在完整管线的实验中，
+本文通过横向对比证明了本文管线的先进性，同时消融实验也证明了SaNL成功解决了第3章管线的缺陷，准确还原并分解了阴影处的数据。
 SaNL不仅能够增强本文光照分解管线的输出效果，同时也为光照表示方法提出了新的可能性。
-
