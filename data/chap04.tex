@@ -234,8 +234,8 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 同时，为了获得更加多样的环境光照数据，这些立方体纹理会围绕$Z$轴随机旋转，尽可能地记录纹理中不同区域的光照。
 
 直接光照部分，本文使用单盏平行光模拟，随机生成光照方向。为了使直接光照更符合真实情况，
-直接光照的仰角随机范围为$[15, 85]$之间，方位角范围为$[0, 360]$之间。同时，为了增加网络对不同颜色的直接光照的泛化性，
-本文使用色温描述直接光照颜色，随机范围为$[5000, 10000]$开尔文。阴影数据$s$也同样由该盏直接光照在网格体上照射产生。
+直接光照的仰角随机范围为[15, 85]度之间，方位角范围为[0, 360]度之间。同时，为了增加网络对不同颜色的直接光照的泛化性，
+本文使用色温描述直接光照颜色，随机范围为[5000, 10000]开尔文。阴影数据$s$也同样由该盏直接光照在网格体上照射产生。
 直接光照和环境光照将按照公式\eqref{eq:li_shadow}进行插值，并输出为监督信号$L_i$。
 
 对于光照嵌入向量$z_l$，需要一张环境纹理$I$作为自动编码器进行计算，因此本文将上述环境光照和直接光照烘焙至
@@ -461,8 +461,8 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 
 \subsection{完整管线实验}
 
-本节使用基于SaNL的数字资产解耦管线进行试验，并横向对比了与本文类似的工作，评估了定量指标。
-本文选择与Mark等人\cite{Boss_2021}提出的NeRD以及Hasselgren等人\cite{10.5555/3600270.3601931}提出的nvdiffrecmc
+本节对基于SaNL的数字资产解耦管线进行，并横向对比了类似工作。本文管线设置为对Metallic工作流进行分解，
+与Mark等人\cite{Boss_2021}提出的NeRD以及Hasselgren等人\cite{10.5555/3600270.3601931}提出的nvdiffrecmc
 进行横向比较。NeRD的光照表示技术使用了SGs，不支持网格体的导出；nvdiffrecmc使用的是环境纹理贴图，
 支持网格体与纹理的导出。
 
@@ -479,9 +479,9 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
       \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
       \midrule
-      NeRD & 26.11 & 0.172 & 0.776 & 27.24 & 0.183 & 0.824 & 23.69 & 0.127 & 0.812 \\
-      nvdiffrecmc & 26.37 & 0.085 & 0.931 & 27.61 & 0.063 & 0.952 & 25.78 & 0.088 & 0.916 \\
-      \textbf{Ours} & \textbf{26.93} & \textbf{0.057} & \textbf{0.963} & \textbf{28.07} & \textbf{0.054} & \textbf{0.965} & \textbf{26.41} & \textbf{0.053} & \textbf{0.947} \\
+      NeRD & 23.48 & 0.126 & 0.889 & 25.83 & 0.097 & 0.824 & 23.69 & 0.127 & 0.812 \\
+      nvdiffrecmc & 26.15 & 0.155 & 0.862 & 25.53 & 0.114 & 0.879 & 25.31 & 0.163 & 0.824 \\
+      \textbf{Ours} & \textbf{30.75} & \textbf{0.0986} & \textbf{0.943} & \textbf{32.45} & \textbf{0.058} & \textbf{0.966} & \textbf{28.67} & \textbf{0.067} & \textbf{0.945} \\
       \bottomrule
   \end{tabular}
   \label{tab:dataset_comparison}
@@ -490,9 +490,9 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 根据定量实验结果，所有方法的性能均在实验室扫描数据中
 有所下滑，这可能是因为实验室扫描数据的光照环境仍然有细微的变化，但本文管线在以上数据集中均取得了最优的成绩，可以证明本文方法的有效性。
 
-图\ref{fig:full_rendering_result}展示了NeRD、nvdiffremc\cite{10.5555/3600270.3601931}与本文管线效果的对比，
+图\ref{fig:full_rendering_result}展示了NeRD、nvdiffremc与本文管线效果的对比，
 尤其是在阴影覆盖的区域中，本文能够较好地还原场景表面细节。比如Lego场景中，
-红色线框和蓝色线框中的细节均能成功还原。
+红色线框内阴影处的细节，本文能够有效地对其还原。而Meterials场景中的高光反射，本文在高频细节和饱和度上也更为准确。
 
 \begin{figure}[htbp]
   \centering
@@ -533,7 +533,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 \end{figure}
 
 渲染结果的细节比较如图\ref{fig:rendering_detail_compare}所示。
-本文的管线成功还原了阴影处的细节，相较于nvdiffrecmc等方法有显著的提升。
+在阴影处的表现中，本文的管线的效果相较于nvdiffrecmc等方法有显著的提升。
 
 \begin{figure}[H]
   \centering
@@ -663,8 +663,8 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
       \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
       \midrule
-      nvdiffrecmc & 26.37 & 0.085 & 0.931 & 27.61 & 0.063 & 0.952 & 25.78 & 0.088 & 0.916 \\
-      \textbf{Ours} & \textbf{27.84} & \textbf{0.0587} & \textbf{0.965} & \textbf{28.07} & \textbf{0.054} & \textbf{0.965} & \textbf{26.41} & \textbf{0.053} & \textbf{0.947} \\
+      w/o SaNL & 28.36 & 0.071 & 0.934 & 28.45 & 0.073 & 0.927 & 26.96 & 0.086 & 0.919 \\
+      \textbf{Ours} & \textbf{30.75} & \textbf{0.049} & \textbf{0.971} & \textbf{31.2} & \textbf{0.048} & \textbf{0.972} & \textbf{29.74} & \textbf{0.052} & \textbf{0.969} \\
       \bottomrule
   \end{tabular}
   \label{tab:sanl_quan}
