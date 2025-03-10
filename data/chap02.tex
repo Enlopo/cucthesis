@@ -600,7 +600,7 @@ DMTet从SDF生成三角形面的计算方式如图\ref{fig:dmtet_calc}所示，�
 
 % 第二个三角形（右）
 \coordinate (A') at (0.5,-0.25);
-\coordinate (B') at (4.3, 0.7);
+\coordinate (B') at (4.3,0.7);
 \coordinate (C') at (1.3,3.1);
 
 \draw[dashedge,line width=1.5pt,color=black!90] (A') -- (B') -- (C') -- cycle;
@@ -609,9 +609,9 @@ DMTet从SDF生成三角形面的计算方式如图\ref{fig:dmtet_calc}所示，�
 \filldraw[white] (B') circle(0.15);
 \filldraw[white] (C') circle(0.15);
 
-\filldraw[ag, fill opacity=0.8] (A') circle(0.15);
-\filldraw[ag, fill opacity=0.8] (B') circle(0.15);
-\filldraw[ar, fill opacity=0.8] (C') circle(0.15);
+\filldraw[ag,fill opacity=0.8] (A') circle(0.15);
+\filldraw[ag,fill opacity=0.8] (B') circle(0.15);
+\filldraw[ar,fill opacity=0.8] (C') circle(0.15);
 
 % 在两条边上添加额外圆点
 \coordinate (M1) at ($(B')!.6!(C')$);
@@ -622,8 +622,8 @@ DMTet从SDF生成三角形面的计算方式如图\ref{fig:dmtet_calc}所示，�
 
 \filldraw[white] (M1) circle(0.15);
 \filldraw[white] (M2) circle(0.15);
-\filldraw[gray, fill opacity=0.8] (M1) circle(0.15);
-\filldraw[gray, fill opacity=0.8] (M2) circle(0.15);
+\filldraw[gray,fill opacity=0.8] (M1) circle(0.15);
+\filldraw[gray,fill opacity=0.8] (M2) circle(0.15);
 
 % 右侧公式标注
 \node[anchor=west] at (4.5,0.4) {
@@ -655,7 +655,7 @@ NeRF作为计算机视觉领域的一项前沿进展，延续了基于坐标的�
 但其建模对象从单一几何属性升级为辐射场函数。NeRF的基本原理是通过深度学习将三维空间中的点映射到其对应的颜色和密度，
 本身的功能可以用公式\eqref{eq:nerf_mapping}定义：
 \begin{equation}
-  F_{\upTheta}:({\boldsymbol{x}}, {\boldsymbol{d}})\rightarrow({\boldsymbol{c}},\sigma)
+  F_{\upTheta}:({\boldsymbol{x}},{\boldsymbol{d}})\rightarrow({\boldsymbol{c}},\sigma)
   \label{eq:nerf_mapping}
 \end{equation}
 其中，$\mathrm{x}\in\mathbb{R}^3$表示三维场景内的坐标，$\mathrm{d}\in\mathbb{S}^\boldsymbol{2}$
@@ -694,7 +694,7 @@ $T\left(t\right)$是体密度函数，$r\left(s\right)$是光线路径上的点�
 
 \subsection{衡量指标}
 
-本节介绍与NeRF技术相关的一系列研究领域中，用来评估网络生成质量的常用衡量指标。
+本节介绍与NeRF技术相关的一系列研究领域中，用来评估管线渲染质量以及几何重建质量的常用衡量指标。
 
 \subsubsection*{（1）峰值信噪比} 
 
@@ -744,6 +744,20 @@ $H_{l}\times W_{l}$为特征图尺寸，$w_{l}$为对应层的可学习权重向
 表明两幅图像在感知上越相似。本文引入LPIPS指标，旨在弥补传统方法在复杂纹理、
 语义一致性等高层视觉特征评估上的不足。相较于PSNR和SSIM，LPIPS能够更敏感地反映人眼对图像细节失真、
 内容扭曲的感知差异，从而为光照重建模型的视觉保真度提供更深入的量化分析依据。
+
+\subsubsection*{（4）倒角距离}
+
+倒角距离（Chamfer Distance，CD）是一种用于衡量三维点云或几何表面之间空间相似性的度量方法，
+可以用来衡量NeRF及光照分解管线对几何形状的重建效果。其核心思想是通过计算两组点集中每个点到另一组点集的最近邻距离之和，
+量化二者在几何结构上的匹配程度。CD值越低，表明两个点集的几何结构越接近，即重建效果越好。
+CD的数学表达式为：
+\begin{equation}\label{eq:CD}
+\mathrm{CD}(P,Q)= \sum_{p \in P} \min_{q \in Q} \|p - q\|^2 + \sum_{q \in Q} \min_{p \in P} \|p - q\|^2
+\end{equation}
+其中，\(P\) 和 \(Q\) 分别表示两个待比较的点集（例如分别由网格体采样得到的点云），\(\|\cdot\|\) 表示欧氏距离。
+在实际应用中，为了准确反映网格体的形状信息，通常会对网格表面进行均匀采样，生成点云后再计算Chamfer Distance。
+同时，实验中报告的数值单位常以 \(10^{-3}\) 为标准，例如一个数值为5的CD指标实际上表示\(5 \times 10^{-3}\)的距离。
+这样，CD不仅可以作为模型训练过程中的损失函数，也能作为评估生成结果与真实形状相似度的直观量化指标。
 
 \section{本章小结}
 在本章节中，本文全面回顾了本文研究所依赖的关键技术基础，包含了深度学习、传统渲染管线、可微渲染理论以及NeRF的相关知识。

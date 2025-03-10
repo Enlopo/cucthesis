@@ -4,31 +4,36 @@
 
 \begin{abstract}
 
-  渲染（Rendering）是根据场景信息和着色模型生成二维图像的过程，是计算机图形
-学的核心问题和最终目标。
-场景通常以数字模型资产（Digital Model Asset）的形式存在，这些资产包含网
-格模型以及纹理贴图，用以表示几何形状、反射属性等多种信息。不同的渲染技术则对
-资产的内容和格式提出了不同要求，二者紧密耦合。这种耦合使得资产一旦制作完成，
-资产便与渲染技术形成了绑定，使得资产在渲染技术迭代或变化时难以兼容，增加了项
-目开发的成本和风险。
+渲染（Rendering）是根据场景信息和着色模型生成二维图像的过程，是计算机图形学的核心问题和最终目标。
+场景通常以数字模型资产（Digital Model Asset）的形式存在，这些资产包含网格模型以及纹理贴图，
+用以表示几何形状、反射属性等多种信息。不同的渲染技术则对资产的内容和格式提出了不同要求，
+二者紧密耦合。这种耦合使得数字资产与特定渲染技术深度绑定，当需要升级渲染管线时，现有资产往往需要重新制作，
+增加了项目开发的成本和风险。
 
-为了解决这一问题，本文提出了一种新颖的解决方案——基于NeRF的数字资产解耦管线。
-该管线基于神经辐射场（Neural Radiance Fields，NeRF）的光照分解研究，从多张二维图像中建立场景的几何形状及反射属性，
-以网格体和纹理贴图的形式导出，实现了将任意数字资产转换为指定渲染技术兼容的格式，完成解耦的目标。
+为了解决这一问题，本文提出了一种新颖的解决方案。
+本文基于神经辐射场（Neural Radiance Fields，NeRF）的光照分解研究，从多张二维图像中建立场景的几何形状及反射属性，
+以网格体和纹理贴图的形式导出，构建了基于NeRF的数字资产解耦管线，实现了将任意数字资产转换为指定渲染技术兼容的格式。
 
 NeRF光照分解研究中，主要分为几何表示方法、光照表示方法以及反射属性三个部分。基于以上三个部分，本文主要工作内容如下：
-\begin{enumerate}
-  \item 对于隐式几何表示无法直接导出网格体的不足，本文采用了深度行进四面体（Deep Marching Tetrahedra，DMTet）作为
-  混合几何表示方法，结合了SDF和网格体的优点，使得管线能够直接输出显式网格体，无缝对接传统渲染器与下游编辑任务。
-  \item 现有的可微渲染研究中，光照表示无法有效处理阴影。本文通过结合条件输入，设计了一宗新颖的阴影感知神经光照表示
-  （Shadow-aware Neural Light，SaNL），并收集了对应的数据进行训练。实验证明，本文的光照表示方法能够正确还原阴影处的数据，
-  在几何重建及光照分解效果上优于同类其它工作。
-  \item 针对本文管线能够以任意渲染技术进行分解的需求，本文使用多层感知机（Multilayer Perceptron, MLP）纹理来表示表面反射属性。
-  这种实现方式为管线提供了足够的灵活性，满足了本文使用任意渲染技术的目标。
-\end{enumerate}
-  \thusetup{
-    keywords = {NeRF, 三维重建, 可微渲染, NeRF分解, 渲染管线},
-  }
+
+对于隐式几何表示无法直接导出网格体的不足，本文采用了深度行进四面体（Deep Marching Tetrahedra，DMTet）作为
+混合几何表示方法。DMTet兼具神经隐式表示和显式表示的优点，配合本文针对网格体重建质量而设计的正则项和训练策略，
+使得管线能够直接输出显式网格体，无缝对接传统渲染器与下游编辑任务。
+
+其次，现有研究中的光照表示无法有效处理阴影。本文通过结合条件输入，设计了一种新颖的阴影感知神经光照表示
+（Shadow-Aware Neural Light，SANL），并构建了包含真实的阴影和几何形状的专用数据集。随后，本文通过完善的定量定性实验
+以及完整管线实验证明了SANL的有效性和优越性。
+
+在反射属性部分，针对本文管线能够以任意渲染技术进行分解的需求，本文使用多层感知机（Multi-Layer Perceptron，MLP）纹理来表示表面反射属性，
+在估计。这种实现方式为管线提供了足够的灵活性，不仅满足了本文使用任意渲染技术的目标，
+同时为本文通过法线细化几何形状、建模阴影的扩展提供了技术基础。
+
+基于以上工作及实验，本文不仅达成了对数字资产进行解耦的目标，并且光照分解效果优异。
+相较于同类工作，本文管线的峰值信噪比及结构相似性指标提升了\%，学习感知图像相似度降低了【】\%，并在形状重建指标倒角距离提升了\%。
+
+\thusetup{
+  keywords = {NeRF, 三维重建, 可微渲染, NeRF分解, 渲染管线},
+}
 \end{abstract}
 
 % 使用 DeepL 翻译：https://www.deepl.com/
@@ -50,11 +55,11 @@ NeRF光照分解研究中，主要分为几何表示方法、光照表示方法�
   
   This paper's key contributions based on NeRF lighting decomposition include:
   
-  \begin{enumerate}
-  \item Adopting Deep Marching Tetrahedra (DMTet) to overcome limitations of implicit geometry by directly exporting explicit meshes compatible with traditional renderers.
-  \item Proposing a Shadow-aware Neural Light (SaNL) representation using conditional inputs, effectively capturing shadows and surpassing existing methods in reconstruction and lighting decomposition.
-  \item Employing Multilayer Perceptron (MLP) textures to flexibly represent surface reflection properties, ensuring compatibility with various rendering techniques.
-  \end{enumerate}
+  Adopting Deep Marching Tetrahedra (DMTet) to overcome limitations of implicit geometry by directly exporting explicit meshes compatible with traditional renderers.
+  
+  Proposing a Shadow-aware Neural Light (SANL) representation using conditional inputs, effectively capturing shadows and surpassing existing methods in reconstruction and lighting decomposition.
+  
+  Employing Multi-Layer Perceptron (MLP) textures to flexibly represent surface reflection properties, ensuring compatibility with various rendering techniques.
   
   % Use comma as separator when inputting
   \thusetup{

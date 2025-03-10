@@ -116,7 +116,7 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
 
 \subsection{基于阴影调制模块的光照表示网络}
 
-基于上述结构，本文设计了基于阴影调制模块的光照表示网络（Shadow-aware Neural Light，SaNL），
+基于上述结构，本文设计了基于阴影调制模块的光照表示网络（Shadow-aware Neural Light，SANL），
 其核心思想是将阴影系数$s$作为额外的标量参数调制到网络中。
 当阴影系数为1时，在该模块的调制下，本文的网络将退化为一张环境光照贴图，其输出将全部为环境光照。
 当阴影系数为0时，则使本文的网络输出为直接光照的光照强度及颜色。该网络的结构如\ref{fig:nl_main_cn}所示，
@@ -190,8 +190,8 @@ $\odot$代表哈达玛乘积（Hadamard Product），对向量的各个分量之
 
 \section{数据集的获取}
 
-由于本文希望SaNL能够学习到阴影与环境光照之间的关系，因此相较于其它的神经网络，
-SaNL需要收集额外的数据集。根据前文的设计，SaNL需要入射光线方向${\boldsymbol{\omega}}_i$、阴影系数$s$、光照嵌入$z^l$作为输入数据，
+由于本文希望SANL能够学习到阴影与环境光照之间的关系，因此相较于其它的神经网络，
+SANL需要收集额外的数据集。根据前文的设计，SANL需要入射光线方向${\boldsymbol{\omega}}_i$、阴影系数$s$、光照嵌入$z^l$作为输入数据，
 以及入射光照$L_i$作为监督信号。本文通过渲染引擎收集了多组包含上述数据的合成数据集，下面介绍收集该数据集的方法及过程。
 
 \subsection{入射光线方向数据}
@@ -229,7 +229,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 
 \subsection{光照与阴影数据}
 
-入射光照数据$L_i$作为SaNL的监督信号，需要充分考虑直接光照和环境光照的关系。对于环境光照，
+入射光照数据$L_i$作为SANL的监督信号，需要充分考虑直接光照和环境光照的关系。对于环境光照，
 本文使用了500张高质量的HDR立方体纹理作为环境光照的数据来源，这些立方体纹理将以IBL技术向场景内投射光照，
 同时，为了获得更加多样的环境光照数据，这些立方体纹理会围绕$Z$轴随机旋转，尽可能地记录纹理中不同区域的光照。
 
@@ -267,12 +267,12 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \label{fig:full_pipe}
 \end{figure}
 
-\section{基于SaNL的解耦管线}
+\section{基于SANL的解耦管线}
 
-前文中，我们通过实验结果分析了管线无法处理阴影的原因，随后根据问题设计了SaNL，并收集了对应的数据进行训练。
-本节将使用SaNL作为光照表示技术，实现数字资产解耦管线，以提升管线的分解效果。
+前文中，我们通过实验结果分析了管线无法处理阴影的原因，随后根据问题设计了SANL，并收集了对应的数据进行训练。
+本节将使用SANL作为光照表示技术，实现数字资产解耦管线，以提升管线的分解效果。
 
-由于本文第3章所设计的管线并不支持对阴影的建模，而SaNL的输入依赖于直接光照所产生的投影作为阴影系数$s$，
+由于本文第3章所设计的管线并不支持对阴影的建模，而SANL的输入依赖于直接光照所产生的投影作为阴影系数$s$，
 因此有必要对阴影建模进行额外的实现和处理。现有的部分NeRF光照分解管线支持阴影的计算，
 但其需要光源信息已知才能对直接光照的投影进行计算，或者依赖额外的光线追踪阶段。
 这些方法的设计动机是为了适用于复杂的光照条件，而本文的研究目标是对数字资产的合成数据进行分解，
@@ -334,15 +334,15 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 
 \section{实验结果与分析}
 
-在前四节中，本文通过新颖的阴影调制模块实现了SaNL，能够在表示光照的同时将阴影与直接光照的信息进行建模。
-随后，本文将SaNL加入第3章的数字资产管线，以提升对网格体和表面属性分解的效果。在这一节中，
-本文将首先对SaNL进行全面的实验，以验证其对光照的表示能力。随后，
-本文将带有SaNL的数字资产解耦管线与相关研究进行横向的定量定性对比，以显示本文方法的优越性。
+在前四节中，本文通过新颖的阴影调制模块实现了SANL，能够在表示光照的同时将阴影与直接光照的信息进行建模。
+随后，本文将SANL加入第3章的数字资产管线，以提升对网格体和表面属性分解的效果。在这一节中，
+本文将首先对SANL进行全面的实验，以验证其对光照的表示能力。随后，
+本文将带有SANL的数字资产解耦管线与相关研究进行横向的定量定性对比，以显示本文方法的优越性。
 最后，本节还对管线进行了定量定性的消融实验，进一步说明了本文相关方法的工作原理和有效性。
 
 \subsection{网络光照输出结果}
 在本节中，本文通过实验展示了光照网络的输出效果。实验环境设置为几何形状和阴影已知，监督信号为真实的带阴影光照效果。
-本实验展示了光照网络在不同的环境贴图下的输出结果，如图\ref{fig:SaNL_result}所示。
+本实验展示了光照网络在不同的环境贴图下的输出结果，如图\ref{fig:SANL_result}所示。
 
 \begin{figure}[htbp]
   \centering
@@ -403,11 +403,11 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
       & GT & Ours & GT & Ours & GT & Ours & GT & Ours \\
   \end{tabular}
 
-  \caption{SaNL输出结果}
-  \label{fig:SaNL_result}
+  \caption{SANL输出结果}
+  \label{fig:SANL_result}
 \end{figure}
 
-图\ref{fig:sanl_single_compare}则展示了本文网络的放大对比，可以看到SaNL在阴影处能够较好地还原环境贴图的细节，
+图\ref{fig:sanl_single_compare}则展示了本文网络的放大对比，可以看到SANL在阴影处能够较好地还原环境贴图的细节，
 实现了按照阴影系数对直接光照和环境光照进行区分的目标，并且在直接光照部分保持了原输入的色温及亮度。
 
 \begin{figure}[H]
@@ -432,7 +432,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
   \caption{局部放大对比}
   \label{fig:sanl_single_compare}
 \end{figure}
-图\ref{fig:sanl_single_compare_failure}展示了SaNL的失败案例，在这张环境纹理中，亮度和饱和度差异较低，
+图\ref{fig:sanl_single_compare_failure}展示了SANL的失败案例，在这张环境纹理中，亮度和饱和度差异较低，
 同时考虑到输入网格体的椅背部分反射角度近似，但是部分位于阴影中、部分暴露于直接光照之下，
 因此网络难以区分直接光照和环境光照，导致高频细节还原失败，同时阴影处着色不正确。
 
@@ -461,7 +461,7 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
 
 \subsection{完整管线实验}
 
-本节对基于SaNL的数字资产解耦管线进行，并横向对比了类似工作。本文管线设置为对Metallic工作流进行分解，
+本节对基于SANL的数字资产解耦管线进行，并横向对比了类似工作。本文管线设置为对Metallic工作流进行分解，
 与Mark等人\cite{Boss_2021}提出的NeRD以及Hasselgren等人\cite{10.5555/3600270.3601931}提出的nvdiffrecmc
 进行横向比较。NeRD的光照表示技术使用了SGs，不支持网格体的导出；nvdiffrecmc使用的是环境纹理贴图，
 支持网格体与纹理的导出。
@@ -609,10 +609,10 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
   \label{fig:mesh_export_compare}
 \end{figure}
 
-\subsection{SaNL消融实验}
+\subsection{SANL消融实验}
 
-本节将通过消融实验，证明SaNL在数字资产解耦任务中的有效性。图\ref{fig:albedo_ablation}展示了本文管线使用及不使用SaNL时，
-在Metallic工作流中对Albedo分解效果的对比。可以清晰地看到，加入了SaNL后的管线可以准确区分阴影与物体的固有色，
+本节将通过消融实验，证明SANL在数字资产解耦任务中的有效性。图\ref{fig:albedo_ablation}展示了本文管线使用及不使用SANL时，
+在Metallic工作流中对Albedo分解效果的对比。可以清晰地看到，加入了SANL后的管线可以准确区分阴影与物体的固有色，
 在深色和浅色物体上都能正确分解，并且有准确的白平衡。
 
 \begin{figure}[H]
@@ -621,19 +621,19 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
   \begin{subfigure}[c]{0.47\textwidth}
     \centering
     \includegraphics[width=\textwidth]{ch4/sanl_ablation/albedo/ours.png}
-    \caption{Ours}
+    \caption{w/ SANL}
   \end{subfigure}
   \begin{subfigure}[c]{0.47\textwidth}
     \centering
     \includegraphics[width=\textwidth]{ch4/sanl_ablation/albedo/wo.png}
-    \caption{w/o SaNL}
+    \caption{w/o SANL}
   \end{subfigure}
   \caption{Albedo输出消融实验结果}
   \label{fig:albedo_ablation}
 \end{figure}
 
 图\ref{fig:mesh_ablation}为管线网格体输出的输出结果。在阴影中的盘子得到了准确平滑的还原，
-而不使用SaNL时则将盘子上的阴影错误地处理为了几何结构，导致重建结果不佳。
+而不使用SANL时则将盘子上的阴影错误地处理为了几何结构，导致重建结果不佳。
 
 \begin{figure}[H]
   \centering
@@ -641,30 +641,33 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
   \begin{subfigure}[c]{0.47\textwidth}
     \centering
     \includegraphics[width=\textwidth]{ch4/sanl_ablation/mesh/ours.png}
-    \caption{Ours}
+    \caption{w/ SANL}
   \end{subfigure}
   \begin{subfigure}[c]{0.47\textwidth}
     \centering
     \includegraphics[width=\textwidth]{ch4/sanl_ablation/mesh/wo.png}
-    \caption{w/o SaNL}
+    \caption{w/o SANL}
   \end{subfigure}
   \caption{网格体输出消融实验结果}
   \label{fig:mesh_ablation}
 \end{figure}
 
-表\ref{tab:sanl_quan}则为定量实验结果，通过对三个不同工作流的定量实验，证明了SaNL在数字资产分解管线中的有效性。
+表\ref{tab:sanl_quan}则为定量实验结果，其中，PSNR、LPIPS以及SSIM用来衡量管线的渲染结果，
+CD用来衡量管线的几何重建结果。由于CD的计算依赖于真实几何形状的点云数据，因此本实验仅应用于带有真实网格体的NeRF-Synthetic数据集，
+并按照Tang等人\cite{Tang_2023}的方法从真实网格体的和管线输出网格体的表面采样获得点云。同时CD的结果取决于场景的大小，
+因此为了放大结果的差异，表格中CD的被缩放至1000倍。
 
 \begin{table}[h]
   \centering
-  \caption{SaNL定量消融实验}
-  \begin{tabular}{l ccc ccc ccc}
+  \caption{SANL渲染图像定量消融实验}
+  \begin{tabular}{l cccc cccc cccc}
       \toprule
       & \multicolumn{3}{c}{Metallic} & \multicolumn{3}{c}{Specular} & \multicolumn{3}{c}{Blinn-Phong} \\
       \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
+      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$\\
       \midrule
-      w/o SaNL & 28.36 & 0.071 & 0.934 & 28.45 & 0.073 & 0.927 & 26.96 & 0.086 & 0.919 \\
-      \textbf{Ours} & \textbf{30.75} & \textbf{0.049} & \textbf{0.971} & \textbf{31.2} & \textbf{0.048} & \textbf{0.972} & \textbf{29.74} & \textbf{0.052} & \textbf{0.969} \\
+      w/o SANL & 28.36 & 0.071 & 0.934 & 7.44 & 28.45 & 0.073 & 0.927 & 7.21 & 26.96 & 0.086 & 0.919 & 6.97\\
+      \textbf{w/ SANL} & \textbf{30.75} & \textbf{0.049} & \textbf{0.971} & \textbf{6.34} & \textbf{31.2} & \textbf{0.048} & \textbf{0.972} & \textbf{6.41} & \textbf{29.74} & \textbf{0.052} & \textbf{0.969} & \textbf{6.06} \\
       \bottomrule
   \end{tabular}
   \label{tab:sanl_quan}
@@ -678,10 +681,10 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
 通过迁移传统即时渲染器中对直接光照和环境光照的假设，提出了一种新颖的光照表示方法。
 该光照表示方法能够同时表示阴影、直接光照以及环境光照，以避免阴影处光照分解失败的问题。
 
-在具体实现上，本文采用FiLM-SIREN块的结构，设计了神经光照表示SaNL，能够将阴影作为条件输入调制到网络中，以实现前文的理念。
-由于SaNL的表示方式不同于其它工作，因此本文额外收集了包含阴影和几何数据的数据集。通过结合现有的潜空间编码器，
-SaNL不仅能够表示阴影，同时还具备物理真实感和连续性，成为了本文管线理想的光照表示方法。
+在具体实现上，本文采用FiLM-SIREN块的结构，设计了神经光照表示SANL，能够将阴影作为条件输入调制到网络中，以实现前文的理念。
+由于SANL的表示方式不同于其它工作，因此本文额外收集了包含阴影和几何数据的数据集。通过结合现有的潜空间编码器，
+SANL不仅能够表示阴影，同时还具备物理真实感和连续性，成为了本文管线理想的光照表示方法。
 
-最后，本文首先对SaNL进行了实验。实验证明，SaNL能够还原多种直接光照与环境贴图。而在完整管线的实验中，
-本文通过横向对比证明了本文管线的先进性，同时消融实验也证明了SaNL成功解决了第3章管线的缺陷，准确还原并分解了阴影处的数据。
-SaNL不仅能够增强本文光照分解管线的输出效果，同时也为光照表示方法提出了新的可能性。
+最后，本文首先对SANL进行了实验。实验证明，SANL能够还原多种直接光照与环境贴图。而在完整管线的实验中，
+本文通过横向对比证明了本文管线的先进性，同时消融实验也证明了SANL成功解决了第3章管线的缺陷，准确还原并分解了阴影处的数据。
+SANL不仅能够增强本文光照分解管线的输出效果，同时也为光照表示方法提出了新的可能性。
