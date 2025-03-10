@@ -117,7 +117,7 @@ $\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法�
 在初期的实验结果中，DMTet生成的网格体通常会将多个顶点挤压在一起，以形成尖锐结构或小块平坦表面。
 在可微渲染管线中，这种重叠顶点不会产生严重的渲染错误，但在传统渲染器中会导致渲染出伪影。在总体形状的表达上，
 重叠顶点也会导致大量的顶点和面被浪费，折损几何重建效果。因此，本文利用均匀拉普拉斯矩阵（Uniform Laplacian）
-计算正则项，引导网络将顶点分散开。均匀拉普拉斯矩阵$\symbfit{L}$基于顶点邻接关系计算：
+计算正则项，引导网络将顶点分散开。均匀拉普拉斯矩阵$\symbfit{L}$基于顶点邻接关系计算如下所示：
 \begin{equation}
   \symbfit{L}_{ij} =
   \begin{cases}
@@ -180,7 +180,7 @@ MLP整体结构如图\ref{fig:mlp_texture_cn}所示。模型首先对输入的�
 \begin{figure}[htb]
   \centering
   % 这里可以控制图片宽度比例
-  \includegraphics[width=1.0\linewidth]{ch3/MLP_texture_cn.png}
+  \includegraphics[width=0.95\linewidth]{ch3/MLP_texture_cn.png}
   \caption{纹理表示方式}
   \label{fig:mlp_texture_cn}
 \end{figure}
@@ -229,7 +229,6 @@ $\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法�
 不同区域的变化程度，并强制网络使用更为平滑的纹理。该损失项的权重随训练步数而逐渐降低，允许网络在网格体细节初步建立之后，
 再使用法线纹理加入更多细节。
 
-
 \subsection{光照表示}
 本文使用第2章中介绍的IBL技术作为光照表示技术。根据\eqref{eq:rendering_equation}中的渲染方程，物体表面的出射光照
 可以表示为：
@@ -238,8 +237,20 @@ $\epsilon$为随机的位移。通过类似于抖动的采样方式，计算法�
   L\left({\boldsymbol{\omega}}_o\right)=\int_{\upOmega} L_i\left({\boldsymbol{\omega}}_i\right)f\left({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)\left({\boldsymbol{\omega}}_i\cdot\boldsymbol{n}\right)\mathrm{d}{\boldsymbol{\omega}}_i,
 \end{equation}
 其中$L_i$表示来自方向${\boldsymbol{\omega}}_i$的入射辐射，$f\left({\boldsymbol{\omega}}_i,{\boldsymbol{\omega}}_o\right)$为BRDF，积分域$\upOmega$为以
-表面法线$\boldsymbol{n}$为中心的半球。由于完整的光照计算开销较高，本文使用了传统渲染引擎中常见的近似方法\cite{Hill_2014}，
-使用分裂和近似以进一步减少计算量。
+表面法线$\boldsymbol{n}$为中心的半球。由于完整的光照计算开销较高，本文参考Munkberg等人\cite{Munkberg_2022}的方法，
+使用了可微的分裂和近似计算。传统渲染引擎中的分裂和近似计算方式如公式\ref{eq:L_omega_o_approx}，
+该公式中的两项积分可以分别使用独立的可微环境贴图进行优化。
+对于镜面反射项，本文使用了一张$6\times512\times512$的纹理，并将每个纹素作为可优化参数，
+通过Mipmap生成不同粗糙度对应的纹理。漫反射项的光照由于不需要高频反射细节，
+因此使用$6\times16\times16$分辨率的纹理以降低计算量。
+
+\subsection{渲染过程}
+根据以上设计及实现，本文管线的渲染过程如图\ref{}所示。给定相机位置和视线方向，即可求取世界空间中着色点坐标。
+MLP材质接收着色点坐标作为输入，并输出切线空间法线及指定工作流对应的反射属性纹理。对于几何表示部分，
+本文使用DMTet输出的显式网格体计算切线空间矩阵，使用该矩阵将切线空间法线转换到世界空间。
+对于光照表示部分，漫反射项将直接根据视线方向和世界空间法线的点乘进行采样，而镜面反射项则视不同的工作流而有所改变，
+以采样不同的粗糙级别。最后，管线将会按照指定的着色模型对反射属性和光照进行最终的计算，输出着色点的颜色值。
+
 
 \section{实验与结果分析}
 通过前两节的分析与介绍，本文设计并实现了数字资产解耦管线，该管线能够按照任意工作流进行光照分解。为了验证

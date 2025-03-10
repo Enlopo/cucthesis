@@ -479,9 +479,9 @@ Teapot、Statue有平滑圆润的表面，而Beach、Girl的几何结构则能�
       \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
       & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ \\
       \midrule
-      NeRD & 23.48 & 0.126 & 0.889 & 25.83 & 0.097 & 0.824 & 23.69 & 0.127 & 0.812 \\
-      nvdiffrecmc & 26.15 & 0.155 & 0.862 & 25.53 & 0.114 & 0.879 & 25.31 & 0.163 & 0.824 \\
-      \textbf{Ours} & \textbf{30.75} & \textbf{0.0986} & \textbf{0.943} & \textbf{32.45} & \textbf{0.058} & \textbf{0.966} & \textbf{28.67} & \textbf{0.067} & \textbf{0.945} \\
+      NeRD & 23.48 & 0.126 & 0.889 & 25.83 & 0.097 & 0.824 & 23.69 & 0.163 & 0.812 \\
+      nvdiffrecmc & 25.71 & 0.094 & 0.908 & 26.43 & 0.089 & 0.916 & 25.31 & 0.127 & 0.824 \\
+      \textbf{Ours} & \textbf{29.54} & \textbf{0.055} & \textbf{0.945} & \textbf{29.67} & \textbf{0.058} & \textbf{0.966} & \textbf{26.67} & \textbf{0.086} & \textbf{0.891} \\
       \bottomrule
   \end{tabular}
   \label{tab:dataset_comparison}
@@ -655,21 +655,21 @@ NeRD无法直接导出网格体，而nvdiffrec产生了较多破面，并且在�
 表\ref{tab:sanl_quan}则为定量实验结果，其中，PSNR、LPIPS以及SSIM用来衡量管线的渲染结果，
 CD用来衡量管线的几何重建结果。由于CD的计算依赖于真实几何形状的点云数据，因此本实验仅应用于带有真实网格体的NeRF-Synthetic数据集，
 并按照Tang等人\cite{Tang_2023}的方法从真实网格体的和管线输出网格体的表面采样获得点云。同时CD的结果取决于场景的大小，
-因此为了放大结果的差异，表格中CD的被缩放至1000倍。
+因此为了放大结果的差异，表格中CD的单位为$10^{-3}$。
 
 \begin{table}[h]
   \centering
-  \caption{SANL渲染图像定量消融实验}
-  \begin{tabular}{l cccc cccc cccc}
+  \caption{SANL定量消融实验}
+  \begin{tabularx}{\textwidth}{l *{12}{>{\centering\arraybackslash}X}}
       \toprule
-      & \multicolumn{3}{c}{Metallic} & \multicolumn{3}{c}{Specular} & \multicolumn{3}{c}{Blinn-Phong} \\
-      \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-      & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$ & PSNR$\uparrow$ & LPIPS$\downarrow$ & SSIM$\uparrow$ & CD$\downarrow$\\
+      & \multicolumn{4}{c}{Metallic} & \multicolumn{4}{c}{Specular} & \multicolumn{4}{c}{Blinn-Phong} \\
+      \cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+      & PSNR & LPIPS& SSIM & CD & PSNR & LPIPS & SSIM & CD & PSNR & LPIPS & SSIM & CD\\
       \midrule
       w/o SANL & 28.36 & 0.071 & 0.934 & 7.44 & 28.45 & 0.073 & 0.927 & 7.21 & 26.96 & 0.086 & 0.919 & 6.97\\
-      \textbf{w/ SANL} & \textbf{30.75} & \textbf{0.049} & \textbf{0.971} & \textbf{6.34} & \textbf{31.2} & \textbf{0.048} & \textbf{0.972} & \textbf{6.41} & \textbf{29.74} & \textbf{0.052} & \textbf{0.969} & \textbf{6.06} \\
+      \textbf{w/ SANL} & \textbf{29.87} & \textbf{0.054} & \textbf{0.954} & \textbf{6.32} & \textbf{29.60} & \textbf{0.055} & \textbf{0.949} & \textbf{6.43} & \textbf{29.16} & \textbf{0.057} & \textbf{0.934} & \textbf{6.85} \\
       \bottomrule
-  \end{tabular}
+    \end{tabularx}
   \label{tab:sanl_quan}
 \end{table}
 
